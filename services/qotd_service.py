@@ -269,6 +269,7 @@ class QotdService:
             tolerance_str = main_sheet[qotd_num, COLUMN["tolerance"]]
             answer = float(answer_str)
             tolerance = float(tolerance_str)
+            multiplier = "0.0"
             for userid, *submissions in self.gss[f"qotd {qotd_num}"].get_data():
                 if userid == str(user.id):
                     wrong_attempts = -1
