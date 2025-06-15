@@ -35,7 +35,7 @@ class LocalSheet:
             self._dirty = False                    
 class GoogleSheetService:
     def __init__(self, workbook_name: str) -> None:
-        self.gc: gspread.Client = gspread.service_account(filename='creds.json')
+        self.gc: gspread.Client = gspread.service_account(filename='/secrets/creds.json')
         self.workbook: gspread.Spreadsheet = self.gc.open(workbook_name)
         self.sheets: dict[str, LocalSheet] = {}
         self.workbook_name: str = workbook_name
