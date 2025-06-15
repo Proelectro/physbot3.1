@@ -97,6 +97,6 @@ class PHODSBot(commands.Bot):
 
 
 if __name__ == "__main__":
-    load_dotenv()
+    # load_dotenv()
     token = os.getenv("TOKEN")
     PHODSBot(config.prefix).run(token)

@@ -42,7 +42,7 @@ class Qotd(Base):
         if message.author.bot or isinstance(message.author, discord.Member):
             return
         if "QOTD" in message.content.upper():
-            await self.log_event("unimportant", f"QOTD mention detected from {message.author} in {message.channel.name}")
+            await self.log_event("unimportant", f"QOTD mention detected from {message.author} in {message.channel}")
             try:
                 await message.channel.send(
                     "To submit your solution of a QOTD type /qotd submit and click on the command. As shown below.",
