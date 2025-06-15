@@ -1,5 +1,4 @@
 import gspread
-import pandas as pd
 class LocalSheet:
     def __init__(self, workbook: gspread.Spreadsheet, sheet_name: str) -> None:
         self.sheet: gspread.Worksheet =  workbook.worksheet(sheet_name)
@@ -31,17 +30,9 @@ class LocalSheet:
         self._dirty = True
     
     def commit(self) -> None:
-        # if self._dirty:
-        #     self.sheet.update(self._data)
-        #     self._dirty = False        
-        
-        # for testing purposes, we will not commit changes to the sheet
         if self._dirty:
-            print(f"Committing changes to {self.sheet_name} (not actually updating the sheet for testing purposes)")
-            df = pd.DataFrame(self._data)
-            df.to_csv(f"{self.sheet_name}.csv", index=False)
-            self._dirty = False
-            
+            self.sheet.update(self._data)
+            self._dirty = False                    
 class GoogleSheetService:
     def __init__(self, workbook_name: str) -> None:
         self.gc: gspread.Client = gspread.service_account(filename='creds.json')
