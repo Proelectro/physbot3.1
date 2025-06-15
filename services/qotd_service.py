@@ -1,7 +1,7 @@
 import logging
 # Add logger configuration at the top
 logger = logging.getLogger("qotd_service")
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 import config
@@ -583,9 +583,9 @@ class QotdService:
         update, base, weighted_solves, solves_official, total_attempts = (
             self._grade_and_merge(qotd_num, True)
         )
-        message = self.gss["data"][0, 0]
-        done_qotds = self.gss["data"][0, 1]
-        season = self.gss["data"][0, 2]
+        message = self.gss["data"][1, 0]
+        done_qotds = self.gss["data"][1, 1]
+        season = self.gss["data"][1, 2]
         time = utils.get_time()
         message = message.format(
             qotd=qotd_num,
@@ -594,14 +594,15 @@ class QotdService:
             time=time,
         )
         for rank, (userid, point) in enumerate(
-            sorted(update[1:], key=lambda x: float(x[1]), reverse=True), start=1
+            sorted(update[1:], key=lambda x: float(x[1]), reverse=True)[:30], start=1
         ):
             rank_dot = f"{rank}."
             username = await self._get_user_name_or_id(userid)
-            message += f"\n{rank_dot:4} {username[:30]:30} {point:.3f}"
+            message += f"\n{rank_dot:4} {username[:30]:30} {float(point):.3f}"
         message += "\n```"
         leaderboard_channel = self.bot.get_channel(config.leaderboard)
         assert isinstance(leaderboard_channel, discord.TextChannel), "Leaderboard channel not found"
+        logger.debug("Posting leaderboard message")
         leaderboard_msg = await leaderboard_channel.fetch_message(
             int(main_sheet[qotd_num, COLUMN["leaderboard"]])
         )
