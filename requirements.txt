@@ -1,0 +1,7 @@
+discord==2.3.2
+gspread==6.2.1
+numpy
+requests
+beautifulsoup4
+lxml
+async-lru
