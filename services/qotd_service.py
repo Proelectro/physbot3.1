@@ -1,7 +1,7 @@
 import logging
 # Add logger configuration at the top
 logger = logging.getLogger("qotd_service")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 import config
