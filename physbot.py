@@ -2,6 +2,8 @@ import logging
 import discord
 from discord.ext import commands
 import config
+from dotenv import load_dotenv
+
 import os
 
 
@@ -95,8 +97,6 @@ class PHODSBot(commands.Bot):
 
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
-
     load_dotenv()
     token = os.getenv("TOKEN")
     PHODSBot(config.prefix).run(token)
