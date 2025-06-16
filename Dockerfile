@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Set environment variable for Google credentials (mounted via Secret Manager)
-ENV GOOGLE_APPLICATION_CREDENTIALS="/creds.json"
+ENV GOOGLE_APPLICATION_CREDENTIALS="secrets/creds.json"
 
 # Run the bot
 CMD ["python", "physbot.py"]

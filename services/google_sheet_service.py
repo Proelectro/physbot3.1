@@ -3,6 +3,7 @@ class LocalSheet:
     def __init__(self, workbook: gspread.Spreadsheet, sheet_name: str) -> None:
         self.sheet: gspread.Worksheet =  workbook.worksheet(sheet_name)
         self._data: list[list[str]] = self.sheet.get()
+        self._clean()
         self._dirty: bool = False
         self.sheet_name: str = sheet_name
     
@@ -21,7 +22,7 @@ class LocalSheet:
         return self._data
     
     def update_data(self, data: list[list[str]]) -> None:
-        assert isinstance(data, list) and all(isinstance(row, list) for row in data) and all(isinstance(cell, str) for row in data for cell in row), "Assertion failer not all string"
+        self._clean()
         self._data = data
         self._dirty = True
         
@@ -29,13 +30,22 @@ class LocalSheet:
         self._data.append(row)
         self._dirty = True
     
+    def _clean(self):
+        for row in self._data:
+            for i in range(len(row)):
+                row[i] = str(row[i])
+            while not row[-1]:
+                row.pop()
+        while not self._data[-1]:
+            self._data.pop()
+    
     def commit(self) -> None:
         if self._dirty:
             self.sheet.update(self._data)
             self._dirty = False                    
 class GoogleSheetService:
     def __init__(self, workbook_name: str) -> None:
-        self.gc: gspread.Client = gspread.service_account(filename='/secrets/creds.json')
+        self.gc: gspread.Client = gspread.service_account(filename='secrets/creds.json')
         self.workbook: gspread.Spreadsheet = self.gc.open(workbook_name)
         self.sheets: dict[str, LocalSheet] = {}
         self.workbook_name: str = workbook_name
