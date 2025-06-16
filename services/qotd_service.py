@@ -458,6 +458,10 @@ class QotdService:
         stats_msg = await question_of_the_day_channel.send(
             embed=stats_embed
         )
+        try:
+            await question_of_the_day_channel.send(f"<@&{config.qotd_role}> to submit your answer use /qotd submit command in my({self.bot.user.mention}) DM.")
+        except Exception as e:
+            logger.error(e)
         logger.debug(len(main_sheet.get_data()))
         logger.debug(qotd_num_to_post)
         main_sheet[qotd_num_to_post, COLUMN["stats"]] = str(stats_msg.id)
