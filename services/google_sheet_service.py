@@ -34,9 +34,9 @@ class LocalSheet:
         for row in self._data:
             for i in range(len(row)):
                 row[i] = str(row[i])
-            while not row[-1]:
+            while row and not row[-1]:
                 row.pop()
-        while not self._data[-1]:
+        while self._data and not self._data[-1]:
             self._data.pop()
     
     def commit(self) -> None:
