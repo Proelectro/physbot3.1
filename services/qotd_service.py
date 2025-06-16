@@ -146,8 +146,7 @@ class QotdService:
                 return False
 
     async def solution(
-        self, user: Union[discord.User, discord.Member], qotd_num: int, link: Optional[str] = None
-    ) -> str:
+        self, user: Union[discord.User, discord.Member], qotd_num: int, link: str) -> str:
         logger.info(f"Solution request for QOTD {qotd_num} by {user.id}")
         async with self.lock:
             logger.debug("Acquired lock for solution")
