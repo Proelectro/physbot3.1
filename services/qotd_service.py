@@ -163,7 +163,8 @@ class QotdService:
                 logger.debug("Released lock for solution")
                 return "Solution link updated successfully"
             else:
-                if main_sheet[qotd_num, COLUMN["solution"]] == "done":
+                logger.debug(main_sheet[qotd_num, COLUMN["solution"]])
+                if main_sheet[qotd_num, COLUMN["status"]] == "done":
                     logger.info(f"Fetching solution for QOTD {qotd_num}")
                     qotd_creator = main_sheet[qotd_num, COLUMN["creator"]]
                     source = main_sheet[qotd_num, COLUMN["source"]]
