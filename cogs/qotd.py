@@ -8,6 +8,7 @@ import os
 from cogs.base import Base
 from typing import Optional
 from services.qotd_service import QotdService
+import traceback
 
 Cog = commands.Cog
 
@@ -35,7 +36,7 @@ class Qotd(Base):
             elif level == "unimportant" and self.log_unimportant:
                 await self.log_unimportant.send(f"ℹ️ **INFO**: {message}")
         except Exception as e:
-            print(f"Failed to log event: {e.with_traceback()}")
+            print(f"Failed to log event: {traceback.format_exc()}")
 
     @Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -54,7 +55,7 @@ class Qotd(Base):
                     "The bot will soon let you know if your answer is correct or incorrect, as shown below.",
                     file=discord.File(os.path.join("images", "verdict.png")))
             except Exception as e:
-                await self.log_event("error", f"Failed to send QOTD help: {e.with_traceback()}")
+                await self.log_event("error", f"Failed to send QOTD help: {traceback.format_exc()}")
 
     @tasks.loop(time=time(0, 0))
     async def daily_qotd_loop(self):
@@ -63,7 +64,7 @@ class Qotd(Base):
             await self.qotd_service.daily_question()
             await self.log_event("unimportant", "Completed daily QOTD task")
         except Exception as e:
-            await self.log_event("error", f"Daily QOTD task failed: {e.with_traceback()}")
+            await self.log_event("error", f"Daily QOTD task failed: {traceback.format_exc()}")
 
     @group.command(name="fetch", description="Fetch a QOTD by number.")
     async def fetch(self, interaction: discord.Interaction, num: int):
@@ -78,7 +79,7 @@ class Qotd(Base):
                 await interaction.followup.send("QOTD not yet done or does not exist.", ephemeral=True)
                 await self.log_event("unimportant", f"Failed to fetch QOTD {num} (invalid or pending)")
         except Exception as e:
-            await self.log_event("error", f"Fetch command failed: {e.with_traceback()}")
+            await self.log_event("error", f"Fetch command failed: {traceback.format_exc()}")
             await interaction.followup.send("An error occurred while fetching the QOTD.", ephemeral=True)
 
     async def cog_app_command_error(self, interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
@@ -103,7 +104,7 @@ class Qotd(Base):
             else:
                 await self.log_event("unimportant", f"Solution fetched for QOTD {num} by {interaction.user}")
         except Exception as e:
-            await self.log_event("error", f"Solution command failed: {e.with_traceback()}")
+            await self.log_event("error", f"Solution command failed: {traceback.format_exc()}")
             await interaction.followup.send("An error occurred while processing the solution.", ephemeral=True)
 
     @group.command(name="submit", description="Submit your answer for a QOTD. Only works in DM. Defaults to live qotd.")
@@ -121,7 +122,7 @@ class Qotd(Base):
             await self.qotd_service.submit(interaction, num, answer)
             await self.log_event("unimportant", f"Submission for QOTD {num} by {interaction.user}")
         except Exception as e:
-            await self.log_event("error", f"Submit command failed: {e.with_traceback()}")
+            await self.log_event("error", f"Submit command failed: {traceback.format_exc()}")
             await interaction.followup.send("An error occurred while processing your submission.", ephemeral=False)
     
     @submit.error
@@ -158,7 +159,7 @@ class Qotd(Base):
                 float(answer)
                 float(tolerance)
             except ValueError as e:
-                await self.log_event("error", f"QOTD Upload ValueError: {e.with_traceback()}")
+                await self.log_event("error", f"QOTD Upload ValueError: {traceback.format_exc()}")
                 await interaction.followup.send("Invalid answer or tolerance.", ephemeral=True)
                 return
 
@@ -181,7 +182,7 @@ class Qotd(Base):
                 await self.log_event("unimportant", f"Unauthorized upload attempt by {interaction.user}")
                 await interaction.followup.send("You are not authorized to upload a QOTD.", ephemeral=True)
         except Exception as e:
-            await self.log_event("error", f"Upload command failed: {e.with_traceback()}")
+            await self.log_event("error", f"Upload command failed: {traceback.format_exc()}")
             await interaction.followup.send("An error occurred during upload.", ephemeral=True)
 
     @group.command(name="update_leaderboard", description="Update the leaderboard of the current QOTD.")        
@@ -200,7 +201,7 @@ class Qotd(Base):
                 await self.log_event("unimportant", f"Unauthorized leaderboard update attempt by {interaction.user}")
                 await interaction.followup.send("You are not authorized to update the leaderboard. Ask a QOTD Creator.", ephemeral=True)
         except Exception as e:
-            await self.log_event("error", f"Leaderboard update failed: {e.with_traceback()}")
+            await self.log_event("error", f"Leaderboard update failed: {traceback.format_exc()}")
             await interaction.followup.send("An error occurred during leaderboard update.", ephemeral=True)
 
     @group.command(name="status", description="Get your status on the current QOTD. Works only in DMs.")
@@ -218,7 +219,7 @@ class Qotd(Base):
                 await self.log_event("unimportant", f"Status command in non-DM by {interaction.user}")
                 await interaction.response.send_message("This command only works in DMs.", ephemeral=True)
         except Exception as e:
-            await self.log_event("error", f"Status command failed: {e.with_traceback()}")
+            await self.log_event("error", f"Status command failed: {traceback.format_exc()}")
             await interaction.followup.send("An error occurred while fetching your status.", ephemeral=True)
 
     @group.command(name="merge", description="Restricted to the owner only (proelectro).")
@@ -234,7 +235,7 @@ class Qotd(Base):
                 await self.log_event("unimportant", f"Unauthorized merge attempt by {interaction.user}")
                 await interaction.followup.send("This is proelectro's private command.", ephemeral=True)
         except Exception as e:
-            await self.log_event("error", f"Merge command failed: {e.with_traceback()}")
+            await self.log_event("error", f"Merge command failed: {traceback.format_exc()}")
             await interaction.followup.send("An error occurred during merge.", ephemeral=True)
 
     @group.command(name="cacheclear", description="Restricted to the owner only (proelectro).")
@@ -250,7 +251,7 @@ class Qotd(Base):
                 await self.log_event("unimportant", f"Unauthorized clear cache attempt by {interaction.user}")
                 await interaction.followup.send("This is proelectro's private command.", ephemeral=True)
         except Exception as e:
-            await self.log_event("error", f"Merge command failed: {e.with_traceback()}")
+            await self.log_event("error", f"Merge command failed: {traceback.format_exc()}")
             await interaction.followup.send("An error occurred during merge.", ephemeral=True)
 
     @group.command(name="remove", description="For QOTD creators. Can remove an upcoming QOTD if it is still pending.")
@@ -270,7 +271,7 @@ class Qotd(Base):
                 await self.log_event("unimportant", f"Unauthorized removal attempt by {interaction.user}")
                 await interaction.followup.send("You are not authorized.", ephemeral=True)
         except Exception as e:
-            await self.log_event("error", f"Remove command failed: {e.with_traceback()}")
+            await self.log_event("error", f"Remove command failed: {traceback.format_exc()}")
             await interaction.followup.send("An error occurred during removal.", ephemeral=True)
 
     def check_qotd_perms(self, interaction: discord.Interaction):
