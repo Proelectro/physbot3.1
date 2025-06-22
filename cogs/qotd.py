@@ -28,7 +28,7 @@ def catch_errors(func):
     return wrapper
 
 
-def valid_permission(level: Permission, user: discord.abc.User, channel: discord.abc.MessageableChannel) -> tuple[bool,str]:
+def valid_permission(level: Permission, user: discord.abc.User, channel: discord.TextChannel) -> tuple[bool,str]:
     match level:
         case Permission.PROELECTRO:
             ok = (user.id == config.proelectro)
@@ -61,15 +61,15 @@ def requires_permission(level: Permission):
     """
     def decorator(func):
         @functools.wraps(func)
-        async def wrapper(self: Qotd, interaction: discord.Interaction, *args, **kwargs):
+        async def wrapper(self, interaction: discord.Interaction, *args, **kwargs):
             embed = self.logger.embed_command(interaction.user, interaction.channel, func.__name__, **kwargs)
             ok, err_msg = valid_permission(level, interaction.user, interaction.channel)
             if not ok:
-                self.logger.warning(embed=embed)
+                await self.logger.warning(embed=embed)
                 return await interaction.response.send_message(err_msg, ephemeral=True)
     
             try:
-                self.logger.info(embed=embed)
+                await self.logger.info(embed=embed)
                 return await func(self, interaction, *args, **kwargs)
 
             # except CommandOnCooldown as cd:
@@ -143,7 +143,7 @@ class Qotd(Cog):
     
 
     @Cog.listener()
-    async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+    async def app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if not isinstance(error, CommandOnCooldown):
             await self.logger.error(f"Command error: {error} in command {interaction.command.name} by {interaction.user}")
             admin = await self.bot.fetch_user(config.proelectro)
@@ -165,7 +165,6 @@ class Qotd(Cog):
         sc = await self.qotd_service.fetch(interaction.channel, num)
         if sc:
             await interaction.followup.send("Successfully fetched the question of the day.", ephemeral=True)
-            await self.logger.info(f"Fetched QOTD {num} in {interaction.channel.name}")
         else:
             await interaction.followup.send("QOTD not yet done or does not exist.", ephemeral=True)
             await self.logger.warning(f"Failed to fetch QOTD {num} (invalid or pending)")

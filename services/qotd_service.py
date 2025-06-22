@@ -18,20 +18,17 @@ from utils.qotd_utils import (
 class Menu(discord.ui.View):
     def __init__(self, main_sheet: LocalSheet, to_append: list):
         super().__init__(timeout=None)
-        self.logger.info(
-            f"Creating Menu with sheet: {main_sheet.sheet_name}, data: {to_append}"
-        )
         self.to_append = to_append
         self.main_sheet = main_sheet
 
     @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
     async def yes(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.logger.info(f"Menu YES selected by {interaction.user}")
+        await self.logger.info(f"Menu YES selected by {interaction.user}")
         data = self.main_sheet.get_data()
         num = self.to_append[0] = len(data)
         self.main_sheet.append_row(self.to_append)
         self.main_sheet.commit()
-        self.logger.info(f"Appended new QOTD {num} to sheet")
+        await self.logger.info(f"Appended new QOTD {num} to sheet")
         await interaction.response.edit_message(
             content=f"Uploaded as QoTD {num}. Accepted by {interaction.user}", view=None
         )
@@ -39,7 +36,7 @@ class Menu(discord.ui.View):
 
     @discord.ui.button(label="No", style=discord.ButtonStyle.red)
     async def no(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.logger.info(f"Menu NO selected by {interaction.user}")
+        await self.logger.info(f"Menu NO selected by {interaction.user}")
         await interaction.response.edit_message(
             content=f"Cancelled uploading...", view=None
         )
@@ -49,7 +46,7 @@ class Menu(discord.ui.View):
 class QotdService:
     def __init__(self, bot: commands.Bot) -> None:
         """Initialize the QotdService with a bot instance."""
-        self.logger = Logger()
+        self.logger = Logger(bot)
         self.gss: GoogleSheetService = GoogleSheetService("QOTD")
         self.bot: commands.Bot = bot
         self.live_qotd: Optional[int] = None
@@ -66,7 +63,7 @@ class QotdService:
             ):
                 await self._daily_question()
             else:
-                self.logger.info("Toggle is OFF, skipping QOTD post")
+                await self.logger.info("Toggle is OFF, skipping QOTD post")
 
     async def clear(self):
         while self.lock.locked():
@@ -97,10 +94,10 @@ class QotdService:
                 or qotd_num >= len(main_sheet.get_data())
                 or main_sheet[qotd_num, COLUMN["status"]] != "done"
             ):
-                self.logger.warning(f"Invalid QOTD number: {qotd_num}")
+                await self.logger.warning(f"Invalid QOTD number: {qotd_num}")
                 return False
 
-            self.logger.info(f"Posting QOTD {qotd_num}")
+            await self.logger.info(f"Posting QOTD {qotd_num}")
             await utils.post_question(
                 channel=channel,
                 num=self.gss["Sheet1"][qotd_num, COLUMN["qotd_num"]],
@@ -117,31 +114,32 @@ class QotdService:
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
             if qotd_num < 1 or qotd_num >= len(main_sheet.get_data()):
-                self.logger.warning(f"Invalid QOTD number: {qotd_num}")
+                await self.logger.warning(f"Invalid QOTD number: {qotd_num}")
                 return "Invalid QOTD number"
             if link:
-                self.logger.info(f"Updating solution link for QOTD {qotd_num}")
+                await self.logger.info(f"Updating solution link for QOTD {qotd_num}")
                 main_sheet[qotd_num, COLUMN["solution"]] = link
                 main_sheet.commit()
-                self.logger.info("Solution link updated successfully")
+                await self.logger.info("Solution link updated successfully")
                 return "Solution link updated successfully"
             else:
                 if main_sheet[qotd_num, COLUMN["status"]] == "done":
-                    self.logger.info(f"Fetching solution for QOTD {qotd_num}")
+                    await self.logger.info(f"Fetching solution for QOTD {qotd_num}")
                     qotd_creator = main_sheet[qotd_num, COLUMN["creator"]]
                     source = main_sheet[qotd_num, COLUMN["source"]]
                     solution = main_sheet[qotd_num, COLUMN["solution"]]
                     answer = main_sheet[qotd_num, COLUMN["answer"]]
+                    tolerance = main_sheet[qotd_num, COLUMN["tolerance"]]
                     post = (
                         f"**QOTD {qotd_num} Solution**\n"
                         + f"QOTD Creator: **{qotd_creator}**\n"
-                        + f"Answer: {answer}\n"
+                        + f"Answer: {answer}   Tolerance: {tolerance}\n"
                         + f"Source: {source}\n"
                         + f"{solution}"
                     )
                     return post
                 else:
-                    self.logger.warning(f"Solution not available for QOTD {qotd_num}")
+                    await self.logger.warning(f"Solution not available for QOTD {qotd_num}")
                     return "Solution not available yet"
 
     async def submit(
@@ -153,7 +151,7 @@ class QotdService:
 
     async def upload(
         self,
-        channel: discord.abc.MessageableChannel,
+        channel: discord.TextChannel,
         creator: str,
         source: str,
         points: str,
@@ -202,12 +200,12 @@ class QotdService:
 
     async def status(self, user: Union[discord.User, discord.Member]) -> str:
         """Send the status of the QOTD to the user."""
-        self.logger.warning(f"Status request by user {user.id}")
+        await self.logger.warning(f"Status request by user {user.id}")
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
             qotd_num = self._get_live_qotd_num()
             if qotd_num is None:
-                self.logger.warning("No live QOTD available for status")
+                await self.logger.warning("No live QOTD available for status")
                 return "No live QOTD available."
             message = f"**QOTD {qotd_num} Status**\n"
             answer_str = main_sheet[qotd_num, COLUMN["answer"]]
@@ -239,12 +237,12 @@ class QotdService:
                 if userid == str(user.id):
                     score = _score
             message += f"\nYour score: {score} + base x ({multiplier})\n"
-            self.logger.warning(message)
+            await self.logger.warning(message)
             return message
 
     async def delete(self, qotd_num: int) -> bool:
         """Delete a QOTD by its number."""
-        self.logger.warning(f"Delete request for QOTD {qotd_num}")
+        await self.logger.warning(f"Delete request for QOTD {qotd_num}")
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
             if (
@@ -252,13 +250,13 @@ class QotdService:
                 or qotd_num >= len(main_sheet.get_data())
                 or main_sheet[qotd_num, COLUMN["status"]] != "pending"
             ):
-                self.logger.warning(f"Invalid deletion request for QOTD {qotd_num}")
+                await self.logger.warning(f"Invalid deletion request for QOTD {qotd_num}")
                 return False
             data = main_sheet.get_data()
             data.pop(qotd_num)
             main_sheet.update_data(data)
             main_sheet.commit()
-            self.logger.info(f"QOTD {qotd_num} deleted successfully")
+            await self.logger.info(f"QOTD {qotd_num} deleted successfully")
             return True
 
     async def _submit(
@@ -269,7 +267,7 @@ class QotdService:
 
         qotd_num = qotd_num or self._get_live_qotd_num()
         if qotd_num is None:
-            self.logger.warning("No live QOTD for submission")
+            await self.logger.warning("No live QOTD for submission")
             await interaction.followup.send(
                 "No live QOTD available to submit an answer for."
             )
@@ -279,13 +277,13 @@ class QotdService:
             or qotd_num >= len(main_sheet.get_data())
             or main_sheet[qotd_num, COLUMN["status"]] == "pending"
         ):
-            self.logger.warning(f"Invalid QOTD number {qotd_num} for submission")
+            await self.logger.warning(f"Invalid QOTD number {qotd_num} for submission")
             await interaction.followup.send("Invalid QOTD number")
             return
         try:
             answer = float(answer_str)
         except ValueError:
-            self.logger.error(f"Invalid answer format: {answer_str}")
+            await self.logger.error(f"Invalid answer format: {answer_str}")
             await interaction.followup.send(
                 "Invalid answer format. Please provide a numeric answer."
             )
@@ -328,17 +326,17 @@ class QotdService:
                     role = phods.get_role(config.qotd_solver)
                     if role is not None:
                         await member.add_roles(role)
-                        self.logger.info(f"Added solver role to user {user.id}")
+                        await self.logger.info(f"Added solver role to user {user.id}")
         await interaction.followup.send(embed=embed)
 
     async def _daily_question(self) -> None:
         main_sheet = self.gss["Sheet1"]
         qotd_num_to_post = self.get_qotd_num_to_post(main_sheet)
         if qotd_num_to_post is None:
-            self.logger.warning("No QOTD available to post")
+            await self.logger.warning("No QOTD available to post")
             qotd_planning = self.bot.get_channel(config.qotd_planning)
             assert isinstance(
-                qotd_planning, discord.abc.MessageableChannel
+                qotd_planning, discord.TextChannel
             ), "QOTD Creator channel not found"
             await qotd_planning.send(
                 f"<@&{config.qotd_creator}> Toggle is on but no QOTD is available to post. Previous Qotd is still live."
@@ -347,7 +345,7 @@ class QotdService:
 
         # Complete the previous QOTD if it is still live
         if main_sheet[qotd_num_to_post - 1, COLUMN["status"]] == "live":
-            self.logger.info(f"Completing previous QOTD {qotd_num_to_post-1}")
+            await self.logger.info(f"Completing previous QOTD {qotd_num_to_post-1}")
             self._merge_leaderboard(qotd_num_to_post - 1, True)
             main_sheet[qotd_num_to_post - 1, COLUMN["status"]] = "done"
 
@@ -355,13 +353,13 @@ class QotdService:
         data_sheet = self.gss["data"]
         data_sheet[1, 1] = str(int(data_sheet[1, 1]) + 1)
         data_sheet.commit()
-        self.logger.info(f"Creating new sheet for QOTD {qotd_num_to_post}")
+        await self.logger.info(f"Creating new sheet for QOTD {qotd_num_to_post}")
         try:
             self.gss.create_sheet(f"qotd {qotd_num_to_post}")
         except Exception as e:
-            self.logger.error(e)
+            await self.logger.error(e)
         # Update the main sheet with the new QOTD details
-        self.logger.info(f"Setting QOTD {qotd_num_to_post} status to live")
+        await self.logger.info(f"Setting QOTD {qotd_num_to_post} status to live")
         main_sheet[qotd_num_to_post, COLUMN["status"]] = "live"
         main_sheet[qotd_num_to_post, COLUMN["date"]] = utils.get_date()
         main_sheet[qotd_num_to_post, COLUMN["day"]] = utils.get_day()
@@ -374,13 +372,13 @@ class QotdService:
             creator=main_sheet[qotd_num_to_post, COLUMN["creator"]],
             difficulty=main_sheet[qotd_num_to_post, COLUMN["difficulty"]],
         )
-        self.logger.info("Posted new QOTD")
+        await self.logger.info("Posted new QOTD")
         phods = self.bot.get_guild(config.phods)
         assert phods, "PHODS guild not found"
         qotd_solver_role = phods.get_role(config.qotd_solver)
         assert qotd_solver_role, "QOTD Solver role not found"
         await utils.remove_roles(qotd_solver_role)
-        self.logger.info("Reset solver roles")
+        await self.logger.info("Reset solver roles")
         # stats
         stats_embed = self._get_statistics_embed(
             num=qotd_num_to_post,
@@ -388,11 +386,11 @@ class QotdService:
         )
         question_of_the_day_channel = self.bot.get_channel(config.question_of_the_day)
         assert isinstance(
-            question_of_the_day_channel, discord.abc.MessageableChannel
+            question_of_the_day_channel, discord.TextChannel
         ), "Question of the Day channel not found"
         leader_board_channel = self.bot.get_channel(config.leaderboard)
         assert isinstance(
-            leader_board_channel, discord.abc.MessageableChannel
+            leader_board_channel, discord.TextChannel
         ), "Leaderboard channel not found"
 
         stats_msg = await question_of_the_day_channel.send(embed=stats_embed)
@@ -401,9 +399,9 @@ class QotdService:
                 f"<@&{config.qotd_role}> to submit your answer use /qotd submit command in my({self.bot.user.mention}) DM."
             )
         except Exception as e:
-            self.logger.error(e)
-        self.logger.debug(len(main_sheet.get_data()))
-        self.logger.debug(qotd_num_to_post)
+            await self.logger.error(e)
+        await self.logger.debug(len(main_sheet.get_data()))
+        await self.logger.debug(qotd_num_to_post)
         main_sheet[qotd_num_to_post, COLUMN["stats"]] = str(stats_msg.id)
         # leaderboard
         leaderboard_msg = await leader_board_channel.send(
@@ -411,10 +409,10 @@ class QotdService:
         )
         main_sheet[qotd_num_to_post, COLUMN["leaderboard"]] = str(leaderboard_msg.id)
         # remove old QOTD
-        self.logger.info(f"Removing old QOTD sheet: qotd {qotd_num_to_post - 3}")
+        await self.logger.info(f"Removing old QOTD sheet: qotd {qotd_num_to_post - 3}")
         del self.gss[f"qotd {qotd_num_to_post - 3}"]
         main_sheet.commit()
-        self.logger.info("Daily question processing completed")
+        await self.logger.info("Daily question processing completed")
 
     def _grade_and_merge(
         self, qotd_num: int, action: bool
@@ -455,12 +453,12 @@ class QotdService:
         leaderboard_sheet.commit()
 
     async def _update_leaderboard_stats(self) -> bool:
-        self.logger.info("Updating leaderboard stats")
+        await self.logger.info("Updating leaderboard stats")
         qotd_num = self._get_live_qotd_num()
         if qotd_num is None:
-            self.logger.warning("No live QOTD for leaderboard update")
+            await self.logger.warning("No live QOTD for leaderboard update")
             return False
-        self.logger.info(f"Updating stats for live QOTD {qotd_num}")
+        await self.logger.info(f"Updating stats for live QOTD {qotd_num}")
         main_sheet = self.gss["Sheet1"]
         update, base, weighted_solves, solves_official, total_attempts = (
             self._grade_and_merge(qotd_num, True)
@@ -484,16 +482,16 @@ class QotdService:
         message += "\n```"
         leaderboard_channel = self.bot.get_channel(config.leaderboard)
         assert isinstance(
-            leaderboard_channel, discord.abc.MessageableChannel
+            leaderboard_channel, discord.TextChannel
         ), "Leaderboard channel not found"
-        self.logger.debug("Posting leaderboard message")
+        await self.logger.debug("Posting leaderboard message")
         leaderboard_msg = await leaderboard_channel.fetch_message(
             int(main_sheet[qotd_num, COLUMN["leaderboard"]])
         )
         await leaderboard_msg.edit(content=message)
         question_of_the_day = self.bot.get_channel(config.question_of_the_day)
         assert isinstance(
-            question_of_the_day, discord.abc.MessageableChannel
+            question_of_the_day, discord.TextChannel
         ), "Question of the Day channel not found"
         stats_msg = await question_of_the_day.fetch_message(
             int(main_sheet[qotd_num, COLUMN["stats"]])
@@ -507,37 +505,33 @@ class QotdService:
             total_attempts=total_attempts,
         )
         await stats_msg.edit(embed=stats_embed)
-        self.logger.info("Leaderboard stats updated")
+        await self.logger.info("Leaderboard stats updated")
         return True
 
     async def _get_user_name_or_id(self, user_id: str) -> str:
-        self.logger.debug(f"Fetching username for {user_id}")
+        await self.logger.debug(f"Fetching username for {user_id}")
         if user_id in self.users:
-            self.logger.debug(f"Found cached username for {user_id}")
+            await self.logger.debug(f"Found cached username for {user_id}")
             return self.users[user_id]
         try:
             user = await self.bot.fetch_user(int(user_id))
             self.users[user_id] = str(user)
-            self.logger.debug(f"Fetched username: {user}")
+            await self.logger.debug(f"Fetched username: {user}")
             return str(user)
         except discord.NotFound:
             self.users[user_id] = user_id
-            self.logger.warning(f"User not found: {user_id}")
+            await self.logger.warning(f"User not found: {user_id}")
             return user_id
         except Exception as e:
-            self.logger.error(f"Error fetching user {user_id}: {e}, e")
+            await self.logger.error(f"Error fetching user {user_id}: {e}, e")
             return user_id
 
     def _get_live_qotd_num(self) -> Optional[int]:
-        self.logger.debug("Getting live QOTD number")
         if self.live_qotd is not None:
-            self.logger.debug(f"Using cached live QOTD: {self.live_qotd}")
             return self.live_qotd
         main_sheet = self.gss["Sheet1"]
         for num in range(1, len(main_sheet.get_data())):
             if main_sheet[num, COLUMN["status"]] == "live":
                 self.live_qotd = num
-                self.logger.info(f"Found live QOTD: {num}")
                 return num
-        self.logger.warning("No live QOTD found")
         return None
