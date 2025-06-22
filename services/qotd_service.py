@@ -396,7 +396,7 @@ class QotdService:
         main_sheet = self.gss["Sheet1"]
         qotd_sheet = self.gss[f"qotd {qotd_num}"]
         leaderboard_sheet = self.gss["Leaderboard"]
-        points, base, weightsolve, numsolved, totalatt = self.grade(
+        points, base, weightsolve, numsolved, totalatt = grade(
             correct_ans=main_sheet[qotd_num, COLUMN["answer"]],
             tolerance=main_sheet[qotd_num, COLUMN["tolerance"]],
             submission=qotd_sheet.get_data(),
