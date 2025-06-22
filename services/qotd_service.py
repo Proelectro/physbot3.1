@@ -379,8 +379,6 @@ class QotdService:
             )
         except Exception as e:
             await self.logger.error(e)
-        await self.logger.debug(len(main_sheet.get_data()))
-        await self.logger.debug(qotd_num_to_post)
         main_sheet[qotd_num_to_post, COLUMN["stats"]] = str(stats_msg.id)
         # leaderboard
         leaderboard_msg = await leader_board_channel.send(
@@ -460,7 +458,6 @@ class QotdService:
         assert isinstance(
             leaderboard_channel, discord.TextChannel
         ), "Leaderboard channel not found"
-        await self.logger.debug("Posting leaderboard message")
         leaderboard_msg = await leaderboard_channel.fetch_message(
             int(main_sheet[qotd_num, COLUMN["leaderboard"]])
         )
@@ -485,14 +482,11 @@ class QotdService:
         return True
 
     async def _get_user_name_or_id(self, user_id: str) -> str:
-        await self.logger.debug(f"Fetching username for {user_id}")
         if user_id in self.users:
-            await self.logger.debug(f"Found cached username for {user_id}")
             return self.users[user_id]
         try:
             user = await self.bot.fetch_user(int(user_id))
             self.users[user_id] = str(user)
-            await self.logger.debug(f"Fetched username: {user}")
             return str(user)
         except discord.NotFound:
             self.users[user_id] = user_id
