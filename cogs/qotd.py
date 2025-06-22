@@ -73,16 +73,16 @@ def requires_permission(level: Permission):
                 await self.logger.info(embed=embed)
                 return await func(self, interaction, *args, **kwargs)
 
-            # except CommandOnCooldown as cd:
-            #     # inform user of cooldown
-            #     try:
-            #         await interaction.response.send_message(str(cd), ephemeral=True)
-            #     except:
-            #         pass
-            #     # log cooldown
-            #     await self.logger.info(
-            #         f"{func.__name__} on cooldown for {interaction.user}: retry in {cd.retry_after:.1f}s"
-            #     )
+            except CommandOnCooldown as cd:
+                # inform user of cooldown
+                try:
+                    await interaction.response.send_message(str(cd), ephemeral=True)
+                except:
+                    pass
+                # log cooldown
+                await self.logger.info(
+                    f"{func.__name__} on cooldown for {interaction.user}: retry in {cd.retry_after:.1f}s"
+                )
 
             except Exception as exc:
                 # log unexpected error
@@ -111,6 +111,7 @@ class Qotd(Cog):
     
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.bot.tree.on_error = self.on_app_command_error
         self.logger = Logger(bot)
         self.qotd_service = QotdService(bot)
         self.daily_qotd_loop.start()
