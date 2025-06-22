@@ -237,24 +237,6 @@ class QotdService:
             await self.logger.warning(message)
             return message
 
-    async def delete(self, qotd_num: int) -> bool:
-        """Delete a QOTD by its number."""
-        await self.logger.warning(f"Delete request for QOTD {qotd_num}")
-        async with self.lock:
-            main_sheet = self.gss["Sheet1"]
-            if (
-                qotd_num < 1
-                or qotd_num >= len(main_sheet.get_data())
-                or main_sheet[qotd_num, COLUMN["status"]] != "pending"
-            ):
-                await self.logger.warning(f"Invalid deletion request for QOTD {qotd_num}")
-                return False
-            data = main_sheet.get_data()
-            data.pop(qotd_num)
-            main_sheet.update_data(data)
-            main_sheet.commit()
-            await self.logger.info(f"QOTD {qotd_num} deleted successfully")
-            return True
 
     async def _submit(
         self, interaction: discord.Interaction, qotd_num: Optional[int], answer_str: str
@@ -405,9 +387,6 @@ class QotdService:
             "Placeholder for leaderboard message"
         )
         main_sheet[qotd_num_to_post, COLUMN["leaderboard"]] = str(leaderboard_msg.id)
-        # remove old QOTD
-        await self.logger.info(f"Removing old QOTD sheet: qotd {qotd_num_to_post - 3}")
-        del self.gss[f"qotd {qotd_num_to_post - 3}"]
         main_sheet.commit()
         await self.logger.info("Daily question processing completed")
 

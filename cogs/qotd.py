@@ -270,18 +270,6 @@ class Qotd(Cog):
         await interaction.followup.send("Cleared cache successfully.", ephemeral=True)
         await self.logger.warning("Cache cleared by proelectro")
 
-    @group.command(name="remove", description="For QOTD creators. Can remove an upcoming QOTD if it is still pending.")
-    @requires_permission(Permission.QOTD_PLANNING)
-    async def remove(self, interaction: discord.Interaction, num: int):
-        await interaction.response.defer()
-        sc = await self.qotd_service.delete(qotd_num=num)
-        if sc:
-            await interaction.followup.send("Removed QOTD", ephemeral=True)
-            await self.logger.warning(f"QOTD {num} removed by {interaction.user}")
-        else:
-            await interaction.followup.send("QOTD number is invalid.", ephemeral=True)
-            await self.logger.info(f"Failed to remove QOTD {num} by {interaction.user}")
-
 
 async def setup(bot: commands.Bot):
     """Load the QOTD cog."""
