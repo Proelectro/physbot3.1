@@ -29,28 +29,29 @@ def catch_errors(func):
 
 
 def valid_permission(level: Permission, user: discord.abc.User, channel: discord.TextChannel) -> tuple[bool,str]:
-    match level:
-        case Permission.PROELECTRO:
-            ok = (user.id == config.proelectro)
-            msg = "This command is only for Proelectro"
-        case Permission.QOTD_PLANNING:
-            ok = (channel.id in (config.qotd_botspam, config.qotd_planning))
-            msg = "This command only works in QOTD planning channels i.e. planning and botspam"
-        case Permission.QOTD_CREATOR:
-            if isinstance(user, discord.Member):
-                roles = [r.id for r in user.roles]
-                ok = (config.qotd_creator in roles or config.admin in roles)
-            else:
-                ok = False
-            msg = "You must have the QOTD-Creator role to run this command"
-        case Permission.DM:
-            ok = isinstance(user, discord.User)
-            msg = "Please try the command in DM"
-        case Permission.EVERYONE:
-            ok, msg = True, ""
-        case _:
-            ok, msg = False, "Invalid permission level"
+    if level == Permission.PROELECTRO:
+        ok = (user.id == config.proelectro)
+        msg = "This command is only for Proelectro"
+    elif level == Permission.QOTD_PLANNING:
+        ok = (channel.id in (config.qotd_botspam, config.qotd_planning))
+        msg = "This command only works in QOTD planning channels i.e. planning and botspam"
+    elif level == Permission.QOTD_CREATOR:
+        if isinstance(user, discord.Member):
+            roles = [r.id for r in user.roles]
+            ok = (config.qotd_creator in roles or config.admin in roles)
+        else:
+            ok = False
+        msg = "You must have the QOTD-Creator role to run this command"
+    elif level == Permission.DM:
+        ok = isinstance(user, discord.User)
+        msg = "Please try the command in DM"
+    elif level == Permission.EVERYONE:
+        ok, msg = True, ""
+    else:
+        ok, msg = False, "Invalid permission level"
+
     return ok, msg
+
 
 def requires_permission(level: Permission):
     """
