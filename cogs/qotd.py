@@ -144,7 +144,7 @@ class Qotd(Cog):
     
 
     @Cog.listener()
-    async def app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+    async def on_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if not isinstance(error, CommandOnCooldown):
             await self.logger.error(f"Command error: {error} in command {interaction.command.name} by {interaction.user}")
             admin = await self.bot.fetch_user(config.proelectro)
