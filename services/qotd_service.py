@@ -23,12 +23,10 @@ class Menu(discord.ui.View):
 
     @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
     async def yes(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.logger.info(f"Menu YES selected by {interaction.user}")
         data = self.main_sheet.get_data()
         num = self.to_append[0] = len(data)
         self.main_sheet.append_row(self.to_append)
         self.main_sheet.commit()
-        await self.logger.info(f"Appended new QOTD {num} to sheet")
         await interaction.response.edit_message(
             content=f"Uploaded as QoTD {num}. Accepted by {interaction.user}", view=None
         )
