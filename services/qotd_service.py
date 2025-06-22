@@ -34,7 +34,6 @@ class Menu(discord.ui.View):
 
     @discord.ui.button(label="No", style=discord.ButtonStyle.red)
     async def no(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.logger.info(f"Menu NO selected by {interaction.user}")
         await interaction.response.edit_message(
             content=f"Cancelled uploading...", view=None
         )
