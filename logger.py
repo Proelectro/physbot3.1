@@ -22,11 +22,11 @@ class Logger:
         self.debug_logs = os.getenv("DEBUG")
         self.log_unimportant: discord.TextChannel = self.bot.get_channel(
             config.log_unimportant
-        )
+        ) # type: ignore
         self.log_important: discord.TextChannel = self.bot.get_channel(
             config.log_important
-        )
-        self.log_error: discord.TextChannel = self.bot.get_channel(config.log_error)
+        ) # type: ignore
+        self.log_error: discord.TextChannel = self.bot.get_channel(config.log_error) # type: ignore
 
     def debug(self, msg: str):
         if self.debug_logs:

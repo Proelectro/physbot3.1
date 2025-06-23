@@ -49,7 +49,7 @@ class QotdService:
         self.live_qotd: Optional[int] = None
         self.lock: asyncio.Lock = asyncio.Lock()
         self.users: dict[str, str] = {}
-        self.base_points = {}
+        # self.base_points = {}
 
     async def daily_question(self) -> None:
         """Post the question of the day (QOTD) every day at a specified time."""
@@ -310,7 +310,7 @@ class QotdService:
 
     async def _daily_question(self) -> None:
         main_sheet = self.gss["Sheet1"]
-        qotd_num_to_post = self.get_qotd_num_to_post(main_sheet)
+        qotd_num_to_post = get_qotd_num_to_post(main_sheet)
         if qotd_num_to_post is None:
             await self.logger.warning("No QOTD available to post")
             qotd_planning = self.bot.get_channel(config.qotd_planning)
@@ -336,7 +336,7 @@ class QotdService:
         try:
             self.gss.create_sheet(f"qotd {qotd_num_to_post}")
         except Exception as e:
-            await self.logger.error(e)
+            await self.logger.error("Unable to create the sheet, maybe already existed", e)
         # Update the main sheet with the new QOTD details
         await self.logger.info(f"Setting QOTD {qotd_num_to_post} status to live")
         main_sheet[qotd_num_to_post, COLUMN["status"]] = "live"
@@ -359,7 +359,7 @@ class QotdService:
         await utils.remove_roles(qotd_solver_role)
         await self.logger.info("Reset solver roles")
         # stats
-        stats_embed = self._get_statistics_embed(
+        stats_embed = get_statistics_embed(
             num=qotd_num_to_post,
             creator=main_sheet[qotd_num_to_post, COLUMN["creator"]],
         )
@@ -373,12 +373,11 @@ class QotdService:
         ), "Leaderboard channel not found"
 
         stats_msg = await question_of_the_day_channel.send(embed=stats_embed)
-        try:
-            await question_of_the_day_channel.send(
-                f"<@&{config.qotd_role}> to submit your answer use /qotd submit command in my({self.bot.user.mention}) DM."
-            )
-        except Exception as e:
-            await self.logger.error(e)
+        assert self.bot.user
+        await question_of_the_day_channel.send(
+            f"<@&{config.qotd_role}> to submit your answer use /qotd submit command in my({self.bot.user.mention}) DM."
+        )
+        
         main_sheet[qotd_num_to_post, COLUMN["stats"]] = str(stats_msg.id)
         # leaderboard
         leaderboard_msg = await leader_board_channel.send(

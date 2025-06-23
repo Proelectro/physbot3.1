@@ -32,8 +32,9 @@ async def post_question(channel: ChannelType, num: str, date: str, day: str,
     post5 = f'Difficulty: {difficulty}\n' if  difficulty is not None else ""
     post6 = f'Category: {topic}\n'if topic is not None else ""
     post7 = f'Answer: {answer} Tolerance: {tolerance}' if answer is not None else ""
-    await channel.send(post)
-    await channel.send(post2 + post3 + post4 + post5 + post6 + post7)
+    
+    await channel.send(post) # type: ignore
+    await channel.send(post2 + post3 + post4 + post5 + post6 + post7) # type: ignore
     
     
 def is_correct_answer(correct_ans: float, answer: float, tolerance: float = 1) -> bool:
@@ -70,5 +71,5 @@ def get_time() -> str:
 
 def get_text_channel(bot: commands.Bot, channel_id: int) -> discord.TextChannel:
     channel = bot.get_channel(channel_id)
-    return channel
+    return channel # type: ignore
     
