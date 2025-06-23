@@ -135,7 +135,7 @@ class Qotd(Cog):
                 "The bot will soon let you know if your answer is correct or incorrect, as shown below.",
                 file=discord.File(os.path.join("images", "verdict.png")))
 
-    @tasks.loop(time=time(0, 0))
+    @tasks.loop(time=time(18, 0))
     @catch_errors
     async def daily_qotd_loop(self):
         await self.logger.info("Starting daily QOTD task")
