@@ -55,7 +55,7 @@ class QotdService:
         """Post the question of the day (QOTD) every day at a specified time."""
         async with self.lock:
             self.live_qotd = None
-            if utils.check_toggle_state(
+            if await utils.check_toggle_state(
                 self.bot.get_channel(config.qotd_toggle), config.qotd_toggle
             ):
                 await self._daily_question()
