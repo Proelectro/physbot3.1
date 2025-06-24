@@ -374,7 +374,7 @@ class Qotd(Cog):
     @group.command(name="score", description="Detailed transcript of score")
     @requires_permission(Permission.EVERYONE)
     async def score(
-        self, interaction: discord.Interaction, user: Optional[discord.User] = None
+        self, interaction: discord.Interaction, solver: discord.User = None
     ):
         await interaction.response.defer(ephemeral=True)
         await interaction.followup.send(
