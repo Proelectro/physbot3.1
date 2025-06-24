@@ -155,7 +155,7 @@ class Qotd(Cog):
                 file=discord.File(os.path.join("images", "verdict.png")),
             )
 
-    @tasks.loop(time=time(18, 0))
+    @tasks.loop(time=time(19, 0))
     @catch_errors
     async def daily_qotd_loop(self):
         await self.logger.info("Starting daily QOTD task")

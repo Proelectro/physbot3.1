@@ -56,7 +56,7 @@ class QotdService:
         async with self.lock:
             self.live_qotd = None
             if await utils.check_toggle_state(
-                self.bot.get_channel(config.qotd_toggle), config.qotd_toggle
+                self.bot.get_channel(config.qotd_planning), config.qotd_toggle
             ):
                 await self._daily_question()
             else:
