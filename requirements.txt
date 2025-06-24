@@ -1,4 +1,5 @@
 discord==2.3.2
+discord-ext-pages
 gspread==6.2.1
 numpy
 requests
