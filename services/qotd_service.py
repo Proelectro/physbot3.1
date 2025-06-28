@@ -66,7 +66,7 @@ class QotdService:
         for i, (question, answer) in enumerate(self.gss["faq"].get_data()):
             if n is None or n == i:
                 embed.add_field(
-                    name=f"❓ {question}",
+                    name=f"❓ {i}) {question}",
                     value=answer,
                     inline=False
                 )
