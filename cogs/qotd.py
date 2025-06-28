@@ -155,6 +155,18 @@ class Qotd(Cog):
                 file=discord.File(os.path.join("images", "verdict.png")),
             )
 
+    @tasks.loop(hours=1)
+    @catch_errors
+    async def hourly_task(self):
+        await self.logger.info("Leader board update started")
+        await self.qotd_service.update_leaderboard()
+        await self.logger.info("Leader board update completed")
+
+    @hourly_task.before_loop
+    @catch_errors
+    async def before_hourly_task(self):
+        await self.bot.wait_until_ready()
+
     @tasks.loop(time=time(19, 0))
     @catch_errors
     async def daily_qotd_loop(self):
