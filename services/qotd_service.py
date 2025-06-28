@@ -56,7 +56,6 @@ class QotdService:
         self.live_qotd: Optional[int] = None
         self.lock: asyncio.Lock = asyncio.Lock()
         self.users: dict[str, str] = {}
-        self.stats: dict[int, Stats] = {}
 
     async def daily_question(self) -> None:
         """Post the question of the day (QOTD) every day at a specified time."""
@@ -385,21 +384,13 @@ class QotdService:
                 ans = main_sheet[num, COLUMN["answer"]]
                 tolerance = main_sheet[num, COLUMN["tolerance"]]
                 qotd_sheet = self.gss[f"qotd {num}"]
-                stats = self._get_stats(num)
+                stats = get_stats(qotd_sheet, ans, tolerance)
                 for user, *sub in qotd_sheet.get_data():
                     if user == user_id:
                         scores.append((f"Qotd {num}",get_score(sub, ans, tolerance, stats)))
         scores.append(("Total", sum(k[1] for k in scores)))
         return scores
         
-    def _get_stats(self, qotd_num:int) -> Stats:
-        if qotd_num in self.stats:
-            return self.stats[qotd_num]
-        qotd_sheet = self.gss[f"qotd {qotd_num}"]
-        main_sheet = self.gss["Sheet1"]
-        ans = main_sheet[qotd_num, COLUMN["answer"]]
-        tolerance = main_sheet[qotd_num, COLUMN["tolerance"]]
-        return get_stats(qotd_sheet, ans, tolerance)
 
     async def _update_leaderboard_stats(self) -> bool:
         await self.logger.info("Updating leaderboard stats")
