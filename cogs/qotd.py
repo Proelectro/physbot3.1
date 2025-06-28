@@ -361,7 +361,7 @@ class Qotd(Cog):
     @group.command(name="faq", description="Get nth faq")
     @requires_permission(Permission.EVERYONE)
     async def faq(self, interaction: discord.Interaction, n: int = None):
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
         await interaction.followup.send(embed=self.qotd_service.get_faq(n))
     
     @group.command(name="end_season", description="Only for proelectro")
