@@ -130,6 +130,7 @@ class Qotd(Cog):
         self.logger = Logger(bot)
         self.qotd_service = QotdService(bot)
         self.daily_qotd_loop.start()
+        self.update_leaderboard_hrs.start()
 
     # General
 
@@ -157,7 +158,7 @@ class Qotd(Cog):
 
     @tasks.loop(hours=1)
     @catch_errors
-    async def hourly_task(self):
+    async def update_leaderboard_hrs(self):
         await self.logger.info("Leader board update started")
         await self.qotd_service.update_leaderboard()
         await self.logger.info("Leader board update completed")
