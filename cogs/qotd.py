@@ -163,7 +163,7 @@ class Qotd(Cog):
         await self.qotd_service.update_leaderboard()
         await self.logger.info("Leader board update completed")
 
-    @hourly_task.before_loop
+    @update_leaderboard_hrs.before_loop
     @catch_errors
     async def before_hourly_task(self):
         await self.bot.wait_until_ready()
