@@ -5,6 +5,7 @@ from typing import Optional, Union
 from datetime import datetime
 from discord.ext import commands
 from enum import Enum
+from time import time
 
 ChannelType = Union[discord.VoiceChannel, discord.StageChannel, discord.ForumChannel, discord.TextChannel, discord.CategoryChannel, discord.Thread, discord.abc.PrivateChannel, None]
 
@@ -64,7 +65,7 @@ def get_day() -> str:
 
 def get_time() -> str:
     """Get the current time in the 12-hour format. [HH:MM AM/PM UTC]"""
-    return datetime.now().strftime("%I:%M %p UTC")
+    return f"<t:{time()}:R>"
 
 def get_text_channel(bot: commands.Bot, channel_id: int) -> discord.TextChannel:
     channel = bot.get_channel(channel_id)
