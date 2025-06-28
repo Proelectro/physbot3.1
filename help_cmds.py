@@ -26,7 +26,7 @@ cmds_everyone = [
     ),
     (
         "/qotd faq [num]",
-        "Get num th faq. Defaults to all faq if no num given. Usecase: For experianced user to give a quick reply to common questions.",
+        "For experianced user to give a quick reply to common questions.",
     ),
 ]
 cmds_creator = [

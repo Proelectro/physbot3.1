@@ -358,7 +358,7 @@ class Qotd(Cog):
         solver = solver or interaction.user
         await interaction.followup.send(embed=await self.qotd_service.get_scores(solver))
         
-    @group.command(name="faq", description="Get nth faq")
+    @group.command(name="faq", description="To answer a faq.")
     @requires_permission(Permission.EVERYONE)
     async def faq(self, interaction: discord.Interaction):
         faq_data = self.qotd_service.get_faq()
