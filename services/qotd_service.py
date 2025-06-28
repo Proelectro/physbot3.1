@@ -207,7 +207,7 @@ class QotdService:
         """Send the status of the QOTD to the user."""
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
-            if main_sheet[qotd_num, COLUMN["tolerance"]] not in ["live", "active"]:
+            if main_sheet[qotd_num, COLUMN["status"]] in ["live", "active"]:
                 answer = main_sheet[qotd_num, COLUMN["answer"]]
                 tolerance = main_sheet[qotd_num, COLUMN["tolerance"]]
                 sub = []
