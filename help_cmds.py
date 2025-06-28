@@ -13,20 +13,20 @@ cmds_everyone = [
         "Submit your answer to the current or specified QOTD via DM. If no number is given, your answer will apply to the live question. Cooldown: 30s.",
     ),
     (
-        "/qotd status",
-        "Check your submission status for the current QOTD in DM. Shows whether you've answered, your score, and ranking feedback. (Deprecated will be removed in v3.2)",
-    ),
-    (
         "/qotd help",
         "Shows this help message, listing all available QOTD commands you have permission to use.",
     ),
     (
         "/qotd verify_submission [num]",
-        "Verify the receipt and validity of a submitted answer for any active QOTD (i.e. any QOTD of current season defaults to live if no arg given) via DM. (Coming in v3.2)",
+        "Verify the receipt and validity of a submitted answer for any active QOTD (i.e. any QOTD of current season defaults to live if no arg given) via DM.",
     ),
     (
         "/qotd score [user]",
-        "Get a detailed transcript of a user's QOTD score history. Will explain the scoring system if no useris given (Coming in v3.2)",
+        "Get a detailed transcript of a user's QOTD score history. Defaults to your own score if no user is mentioned.",
+    ),
+    (
+        "/qotd faq [num]",
+        "Get num th faq. Defaults to all faq if no num given. Usecase: For experianced user to give a quick reply to common questions.",
     ),
 ]
 cmds_creator = [

@@ -355,11 +355,15 @@ class Qotd(Cog):
         self, interaction: discord.Interaction, solver: discord.User = None
     ):
         await interaction.response.defer()
-        if solver:
-            await interaction.followup.send(embed=await self.qotd_service.get_scores(solver))
-        else:
-            await interaction.followup.send("I will explain the scoring system soon, too lazy currently to type it out.")
-            
+        solver = solver or interaction.user
+        await interaction.followup.send(embed=await self.qotd_service.get_scores(solver))
+        
+    @group.command(name="faq", description="Get nth faq")
+    @requires_permission(Permission.EVERYONE)
+    async def faq(self, interaction: discord.Interaction, n: int = None):
+        await interaction.response.defer(ephemeral=True)
+        await interaction.followup.send(embed=self.qotd_service.get_faq(n))
+    
     @group.command(name="end_season", description="Only for proelectro")
     @requires_permission(Permission.PROELECTRO)
     async def end_season(self, interaction: discord.Interaction):
