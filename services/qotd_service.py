@@ -6,12 +6,19 @@ from typing import Union, Optional, Tuple, Any
 from discord.ext import commands
 from services.google_sheet_service import GoogleSheetService, LocalSheet
 from logger import Logger
+from collections import defaultdict
 from utils.qotd_utils import (
     COLUMN,
     get_qotd_num_to_post,
     get_statistics_embed,
     get_submit_embed,
     grade,
+    get_score,
+    is_correct_answer,
+    Stats,
+    create_scores_embed,
+    create_submission_embed,
+    get_stats
 )
 
 
@@ -49,7 +56,7 @@ class QotdService:
         self.live_qotd: Optional[int] = None
         self.lock: asyncio.Lock = asyncio.Lock()
         self.users: dict[str, str] = {}
-        # self.base_points = {}
+        self.stats: dict[int, Stats] = {}
 
     async def daily_question(self) -> None:
         """Post the question of the day (QOTD) every day at a specified time."""
@@ -73,11 +80,6 @@ class QotdService:
             result = await self._update_leaderboard_stats()
             return result
 
-    async def merge_leaderboard(self, qotd_num: int, action: bool) -> None:
-        """Merge the leaderboard for a specific QOTD number."""
-        async with self.lock:
-            self._merge_leaderboard(qotd_num, action)
-
     async def fetch(
         self,
         channel: utils.ChannelType,
@@ -89,7 +91,7 @@ class QotdService:
             if (
                 qotd_num < 1
                 or qotd_num >= len(main_sheet.get_data())
-                or main_sheet[qotd_num, COLUMN["status"]] != "done"
+                or main_sheet[qotd_num, COLUMN["status"]] not in ["done", "active"]
             ):
                 await self.logger.warning(f"Invalid QOTD number: {qotd_num}")
                 return False
@@ -120,7 +122,7 @@ class QotdService:
                 await self.logger.info("Solution link updated successfully")
                 return "Solution link updated successfully"
             else:
-                if main_sheet[qotd_num, COLUMN["status"]] == "done":
+                if main_sheet[qotd_num, COLUMN["status"]] in ["done", "active"]:
                     await self.logger.info(f"Fetching solution for QOTD {qotd_num}")
                     qotd_creator = main_sheet[qotd_num, COLUMN["creator"]]
                     source = main_sheet[qotd_num, COLUMN["source"]]
@@ -195,47 +197,28 @@ class QotdService:
                 content="Are you sure you want to upload this QOTD? This action cannot be undone.",
             )
 
-    async def status(self, user: Union[discord.User, discord.Member]) -> str:
+    async def get_scores(self, user: discord.abc.User):
+        async with self.lock:
+            scores = await self._get_scores(str(user.id))
+            embed = create_scores_embed(user.name, scores)
+            return embed
+    
+    async def verify_submissions(self, user: Union[discord.User, discord.Member], qotd_num: int) -> Optional[discord.Embed]:
         """Send the status of the QOTD to the user."""
-        await self.logger.warning(f"Status request by user {user.id}")
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
-            qotd_num = self._get_live_qotd_num()
-            if qotd_num is None:
-                await self.logger.warning("No live QOTD available for status")
-                return "No live QOTD available."
-            message = f"**QOTD {qotd_num} Status**\n"
-            answer_str = main_sheet[qotd_num, COLUMN["answer"]]
-            tolerance_str = main_sheet[qotd_num, COLUMN["tolerance"]]
-            answer = float(answer_str)
-            tolerance = float(tolerance_str)
-            multiplier = "0.0"
-            for userid, *submissions in self.gss[f"qotd {qotd_num}"].get_data():
-                if userid == str(user.id):
-                    wrong_attempts = -1
-                    if submissions:
-                        for i, sub in enumerate(submissions, start=1):
-                            verdict = (
-                                "Correct"
-                                if utils.is_correct_answer(
-                                    answer, float(sub), tolerance
-                                )
-                                else "Incorrect"
-                            )
-                            message += f"Attempt {i}: {sub} - {verdict}\n"
-                            if verdict == "Correct":
-                                wrong_attempts = i - 1
-                                break
-                    multiplier = (
-                        "0.0" if wrong_attempts == -1 else f"0.8 ^ {wrong_attempts}"
-                    )
-            score = "0.0"
-            for userid, _score in self.gss["Leaderboard"].get_data()[1:]:
-                if userid == str(user.id):
-                    score = _score
-            message += f"\nYour score: {score} + base x ({multiplier})\n"
-            await self.logger.warning(message)
-            return message
+            if main_sheet[qotd_num, COLUMN["tolerance"]] not in ["live", "active"]:
+                answer = main_sheet[qotd_num, COLUMN["answer"]]
+                tolerance = main_sheet[qotd_num, COLUMN["tolerance"]]
+                sub = []
+                for userid, *submissions in self.gss[f"qotd {qotd_num}"].get_data():
+                    if userid == str(user.id):
+                        sub = submissions
+                        break
+                embed = create_submission_embed(user, qotd_num, sub, answer, tolerance)
+                await self.logger.warning(embed=embed)
+                return embed
+            return None
 
 
     async def _submit(
@@ -262,14 +245,13 @@ class QotdService:
         try:
             answer = float(answer_str)
         except ValueError:
-            await self.logger.error(f"Invalid answer format: {answer_str}")
             await interaction.followup.send(
                 "Invalid answer format. Please provide a numeric answer."
             )
             return
         correct_ans = float(main_sheet[qotd_num, COLUMN["answer"]])
         tolerance = float(main_sheet[qotd_num, COLUMN["tolerance"]])
-        is_correct = utils.is_correct_answer(correct_ans, answer, tolerance)
+        is_correct = is_correct_answer(correct_ans, answer, tolerance)
         embed = get_submit_embed(
             user=user,
             qotd_num=qotd_num,
@@ -325,8 +307,7 @@ class QotdService:
         # Complete the previous QOTD if it is still live
         if main_sheet[qotd_num_to_post - 1, COLUMN["status"]] == "live":
             await self.logger.info(f"Completing previous QOTD {qotd_num_to_post-1}")
-            self._merge_leaderboard(qotd_num_to_post - 1, True)
-            main_sheet[qotd_num_to_post - 1, COLUMN["status"]] = "done"
+            main_sheet[qotd_num_to_post - 1, COLUMN["status"]] = "active"
 
         # Increment the QOTD number in the for leaderboard
         data_sheet = self.gss["data"]
@@ -358,7 +339,7 @@ class QotdService:
         assert qotd_solver_role, "QOTD Solver role not found"
         await utils.remove_roles(qotd_solver_role)
         await self.logger.info("Reset solver roles")
-        # stats
+        # stats 
         stats_embed = get_statistics_embed(
             num=qotd_num_to_post,
             creator=main_sheet[qotd_num_to_post, COLUMN["creator"]],
@@ -367,63 +348,58 @@ class QotdService:
         assert isinstance(
             question_of_the_day_channel, discord.TextChannel
         ), "Question of the Day channel not found"
-        leader_board_channel = self.bot.get_channel(config.leaderboard)
-        assert isinstance(
-            leader_board_channel, discord.TextChannel
-        ), "Leaderboard channel not found"
+        
 
         stats_msg = await question_of_the_day_channel.send(embed=stats_embed)
         assert self.bot.user
         await question_of_the_day_channel.send(
             f"<@&{config.qotd_role}> to submit your answer use /qotd submit command in my({self.bot.user.mention}) DM."
         )
-        
         main_sheet[qotd_num_to_post, COLUMN["stats"]] = str(stats_msg.id)
+        
         # leaderboard
+        leader_board_channel = self.bot.get_channel(config.leaderboard)
+        assert isinstance(
+            leader_board_channel, discord.TextChannel
+        ), "Leaderboard channel not found"
         leaderboard_msg = await leader_board_channel.send(
             "Placeholder for leaderboard message"
         )
         main_sheet[qotd_num_to_post, COLUMN["leaderboard"]] = str(leaderboard_msg.id)
+        
+        # final commit 
         main_sheet.commit()
         await self.logger.info("Daily question processing completed")
 
-    def _grade_and_merge(
-        self, qotd_num: int, action: bool
-    ) -> Tuple[list[list[str]], float, float, int, int]:
+
+   
+
+    async def _get_scores(self, user_id: str):
         main_sheet = self.gss["Sheet1"]
+        scores: list[tuple[str, float]] = []
+        for user, score in self.gss["Leaderboard"].get_data():
+            if user == user_id:
+                scores.append(("Offset", float(score)))
+        for num in range(1, len(main_sheet.get_data())):
+            if main_sheet[num, COLUMN["status"]] in ["active", "live"]:
+                ans = main_sheet[num, COLUMN["answer"]]
+                tolerance = main_sheet[num, COLUMN["tolerance"]]
+                qotd_sheet = self.gss[f"qotd {num}"]
+                stats = self._get_stats(num)
+                for user, *sub in qotd_sheet.get_data():
+                    if user == user_id:
+                        scores.append((f"Qotd {num}",get_score(sub, ans, tolerance, stats)))
+        scores.append(("Total", sum(k[1] for k in scores)))
+        return scores
+        
+    def _get_stats(self, qotd_num:int) -> Stats:
+        if qotd_num in self.stats:
+            return self.stats[qotd_num]
         qotd_sheet = self.gss[f"qotd {qotd_num}"]
-        leaderboard_sheet = self.gss["Leaderboard"]
-        points, base, weightsolve, numsolved, totalatt = grade(
-            correct_ans=main_sheet[qotd_num, COLUMN["answer"]],
-            tolerance=main_sheet[qotd_num, COLUMN["tolerance"]],
-            submission=qotd_sheet.get_data(),
-        )
-        points_dict = {user: score for user, score in points}
-        update = [["users", "points"]]
-        for user_str, past_score_str in leaderboard_sheet.get_data()[1:]:
-            try:
-                past_score = float(past_score_str)
-                if action:
-                    past_score += float(points_dict[user_str])
-                else:
-                    past_score -= float(points_dict[user_str])
-                del points_dict[user_str]
-            except KeyError:
-                pass
-            except ValueError:
-                continue
-            update.append([user_str, str(past_score)])
-
-        for user_str, score in points_dict.items():
-            update.append([user_str, score])
-
-        return update, base, weightsolve, numsolved, totalatt
-
-    def _merge_leaderboard(self, qotd_num: int, action: bool) -> None:
-        update = self._grade_and_merge(qotd_num, action)[0]
-        leaderboard_sheet = self.gss["Leaderboard"]
-        leaderboard_sheet.update_data(update)
-        leaderboard_sheet.commit()
+        main_sheet = self.gss["Sheet1"]
+        ans = main_sheet[qotd_num, COLUMN["answer"]]
+        tolerance = main_sheet[qotd_num, COLUMN["tolerance"]]
+        return get_stats(qotd_sheet, ans, tolerance)
 
     async def _update_leaderboard_stats(self) -> bool:
         await self.logger.info("Updating leaderboard stats")
@@ -433,9 +409,6 @@ class QotdService:
             return False
         await self.logger.info(f"Updating stats for live QOTD {qotd_num}")
         main_sheet = self.gss["Sheet1"]
-        update, base, weighted_solves, solves_official, total_attempts = (
-            self._grade_and_merge(qotd_num, True)
-        )
         message = self.gss["data"][1, 0]
         done_qotds = self.gss["data"][1, 1]
         season = self.gss["data"][1, 2]
@@ -446,8 +419,20 @@ class QotdService:
             season=season,
             time=time,
         )
+        
+        total_scores = {user: float(score) for user, score in self.gss["Leaderboard"].get_data()}
+        for num in range(1, len(main_sheet.get_data())):
+            if main_sheet[num, COLUMN["status"]] in ["active", "live"]:
+                ans = main_sheet[num, COLUMN["answer"]]
+                tolerance = main_sheet[num, COLUMN["tolerance"]]
+                qotd_sheet = self.gss[f"qotd {num}"]
+                scores, stats = grade(qotd_sheet, ans, tolerance)
+                for user, points in scores.items():
+                    total_scores[user] = total_scores.get(user, 0.0) + points
+        
+        
         for rank, (userid, point) in enumerate(
-            sorted(update[1:], key=lambda x: float(x[1]), reverse=True)[:30], start=1
+            sorted(total_scores.items(), key=lambda x: float(x[1]), reverse=True)[:30], start=1
         ):
             rank_dot = f"{rank}."
             username = await self._get_user_name_or_id(userid)
@@ -471,10 +456,10 @@ class QotdService:
         stats_embed = get_statistics_embed(
             num=qotd_num,
             creator=main_sheet[qotd_num, COLUMN["creator"]],
-            base=base,
-            weighted_solves=weighted_solves,
-            solves_official=solves_official,
-            total_attempts=total_attempts,
+            base=stats.base,
+            weighted_solves=stats.weight_solves,
+            solves_official=stats.total_solves,
+            total_attempts=stats.total_attempts,
         )
         await stats_msg.edit(embed=stats_embed)
         await self.logger.info("Leaderboard stats updated")

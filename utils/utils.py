@@ -36,9 +36,6 @@ async def post_question(channel: ChannelType, num: str, date: str, day: str,
     await channel.send(post) # type: ignore
     await channel.send(post2 + post3 + post4 + post5 + post6 + post7) # type: ignore
     
-    
-def is_correct_answer(correct_ans: float, answer: float, tolerance: float = 1) -> bool:
-    return abs(correct_ans-answer) <= abs(correct_ans*tolerance/100.0)
 
 async def remove_roles(role: discord.Role) -> None:
     """Removes a specific role from all members in the guild.

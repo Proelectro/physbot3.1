@@ -2,6 +2,7 @@ import numpy as np
 from typing import Optional, Any, Union
 from utils import utils
 from datetime import datetime, timezone
+from services.google_sheet_service import LocalSheet 
 import config
 import discord
 
@@ -24,6 +25,19 @@ COLUMN = {
 }
 A1, a1, B1, b1 = 8.90125, -0.0279323, 24.6239, -0.402639
 
+class Stats:
+    def __init__(self, weight_solves:float = 0.0, total_solves:int = 0, total_attempts:int = 0, base: Optional[float] = None ):
+        self.base = base
+        self.weight_solves = weight_solves
+        self.total_solves = total_solves
+        self.total_attempts = total_attempts
+        
+    def calc_base(self):
+        self.base = A1 * np.exp(a1 * self.weight_solves) + B1 * np.exp(b1 * self.weight_solves)
+        
+    def get_score(self, attempt: int):
+        assert self.base, "please call calc base first"
+        return self.base * 0.8 ** attempt
 
 def get_qotd_num_to_post(main_sheet) -> Optional[int]:
     for num in range(1, len(main_sheet.get_data())):
@@ -31,30 +45,76 @@ def get_qotd_num_to_post(main_sheet) -> Optional[int]:
             return num
     return None
 
-def grade(
-    correct_ans: str, tolerance: str, submission: list[list[str]]
-) -> tuple[list[list[Any]], float, float, int, int]:
-    totalatt = 0
-    weigting = {}
-    for sub in submission:
-        user, *attp = sub
-        totalatt += len(attp)
-        score = 1.0 / 0.8
-        for ans in attp[:6]:
-            score *= 0.8
-            if utils.is_correct_answer(
-                float(correct_ans), float(ans), float(tolerance)
-            ):
+def is_correct_answer(correct_ans: float, answer: float, tolerance: float = 1) -> bool:
+    return abs(correct_ans-answer) <= abs(correct_ans*tolerance/100.0)
+
+
+def get_stats(qotd_sheet: LocalSheet, correct_ans: str, tolerance: str):
+    stats = Stats()
+    for user, *submissions in qotd_sheet.get_data():
+        stats.total_attempts += len(submissions)
+        attempts = 0
+        for his_ans in submissions:
+            if is_correct_answer(float(correct_ans), float(his_ans), float(tolerance)):
+                if attempts <= 5:
+                    stats.weight_solves += 0.8 ** attempts
+                stats.total_solves += 1
                 break
-        else:
-            score = 0
-        weigting[user] = score
-    weightsolve = sum(weigting.values())
-    numsolved = len(list(filter(lambda k: weigting[k], weigting)))
-    base = A1 * np.exp(a1 * weightsolve) + B1 * np.exp(b1 * weightsolve)
-    points = [[user, str(weigting[user] * base)] for user in weigting]
-    return points, base, weightsolve, numsolved, totalatt
+            attempts += 1
+    stats.calc_base()
+    return stats
+
+def get_score(submissions: list[str], correct_ans: str, tolerance: str, stats: Stats):
+    attempts = 0
+    for his_ans in submissions:
+        if is_correct_answer(float(correct_ans), float(his_ans), float(tolerance)):
+            if attempts <= 5:
+                return stats.get_score(attempts)
+        attempts += 1
+    return 0
+
+def grade(qotd_sheet: LocalSheet, correct_ans: str, tolerance: str):
+    stats = get_stats(qotd_sheet, correct_ans, tolerance)
+    scores = {user: get_score(sub, correct_ans, tolerance, stats) for user, * sub in qotd_sheet.get_data()}    
+    return scores, stats
     
+def create_scores_embed(username: str, scores: list[tuple[str, float]]) -> discord.Embed:
+    embed = discord.Embed(
+        title=f"🏆 Scores Card {username}",
+        color=discord.Color.gold()
+    )
+
+    for name, score in scores:
+        embed.add_field(
+            name=name,
+            value=f"{score:.3f}",
+            inline=False
+        )
+    return embed
+
+def create_submission_embed(user: discord.abc.User, qotd_num: int, submissions: list[str], answer: str, tolerance: str) -> discord.Embed:
+    embed = discord.Embed(
+        title=f"📨 QOTD #{qotd_num} - Submissions by {user.name}",
+        color=discord.Color.blurple()
+    )
+    
+    if not submissions:
+        embed.add_field(name="No Submissions", value="This user hasn't submitted any answers yet.", inline=False)
+        return embed
+
+    for idx, sub in enumerate(submissions, start=1):
+        verdict = is_correct_answer(float(answer), float(sub), float(tolerance))
+        verdict_emoji = "✅" if verdict else "❌"
+        embed.add_field(
+            name=f"Attempt #{idx}",
+            value=f"{verdict_emoji} `{sub}`",
+            inline=False
+        )
+
+    embed.set_footer(text=str(user.id))
+    return embed
+
+
 def get_statistics_embed(
     num: int,
     creator: str,
@@ -93,4 +153,5 @@ def get_submit_embed(
     embed.add_field(
         name="Verdict:", value="Correct" if correct else "Incorrect", inline=False
     )
+    embed.set_footer(text=str(user.id))    
     return embed

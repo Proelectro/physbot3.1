@@ -46,7 +46,7 @@ def valid_permission(
     elif level == Permission.QOTD_CREATOR:
         if isinstance(user, discord.Member):
             roles = [r.id for r in user.roles]
-            ok = config.qotd_creator in roles
+            ok = (config.qotd_creator in roles) or (channel.id in (config.qotd_botspam, config.qotd_planning))
         else:
             ok = False
         msg = "You must have the QOTD-Creator role to run this command"
@@ -311,29 +311,6 @@ class Qotd(Cog):
                 f"Leaderboard update attempted but no live QOTD by {interaction.user}"
             )
 
-    @group.command(
-        name="status",
-        description="Get your status on the current QOTD. Works only in DMs.",
-    )
-    @app_commands.checks.cooldown(1, 30)
-    @requires_permission(Permission.DM)
-    async def status(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        status = await self.qotd_service.status(interaction.user)
-        await interaction.followup.send(status)
-        await self.logger.info(f"Status checked by {interaction.user}")
-
-    @group.command(
-        name="merge", description="Restricted to the owner only (proelectro)."
-    )
-    @requires_permission(Permission.PROELECTRO)
-    async def merge(self, interaction: discord.Interaction, num: int, add: bool = True):
-        await interaction.response.defer(ephemeral=True)
-        await self.qotd_service.merge_leaderboard(num, add)
-        await interaction.followup.send(
-            "Leaderboard merged successfully.", ephemeral=True
-        )
-        await self.logger.warning(f"Leaderboard merged for QOTD {num} by proelectro")
 
     @group.command(
         name="clear_cache", description="Restricted to the owner only (proelectro)."
@@ -364,23 +341,25 @@ class Qotd(Cog):
     )
     @requires_permission(Permission.DM)
     async def verify_submission(
-        self, interaction: discord.Interaction, num: Optional[int] = None
-    ):
-        await interaction.response.defer(ephemeral=True)
-        await interaction.followup.send(
-            "This command will be there from bot version 3.2"
-        )
+        self, interaction: discord.Interaction, num: int):
+        await interaction.response.defer()
+        embed = await self.qotd_service.verify_submissions(interaction.user, num)
+        if embed:
+            await interaction.followup.send(embed=embed)
+        else:
+            await interaction.followup.send("Invalid qotd number please choose an active/ live qotd.")
 
     @group.command(name="score", description="Detailed transcript of score")
     @requires_permission(Permission.EVERYONE)
     async def score(
         self, interaction: discord.Interaction, solver: discord.User = None
     ):
-        await interaction.response.defer(ephemeral=True)
-        await interaction.followup.send(
-            "This command will be there from bot version 3.2"
-        )
-
+        await interaction.response.defer()
+        if solver:
+            await interaction.followup.send(embed=await self.qotd_service.get_scores(solver))
+        else:
+            await interaction.followup.send("I will explain the scoring system soon, too lazy currently to type it out.")
+            
     @group.command(name="end_season", description="Only for proelectro")
     @requires_permission(Permission.PROELECTRO)
     async def end_season(self, interaction: discord.Interaction):
@@ -419,11 +398,9 @@ class Qotd(Cog):
             embed.set_footer(text=f"Page {len(pages)+1}/{((len(command_list)+ per_page - 1)/per_page)} • Use commands responsibly!")
             pages.append(embed)
 
-        # If only 1 page, send without buttons
         if len(pages) == 1:
             return await interaction.followup.send(embed=pages[0], ephemeral=True)
 
-        # Create view with navigation buttons
         view = PaginatorView(pages, interaction.user)
         await interaction.followup.send(embed=pages[0], view=view, ephemeral=True)
         view.message = await interaction.original_response()
@@ -470,7 +447,6 @@ class PaginatorView(discord.ui.View):
         await interaction.response.edit_message(embed=self.pages[self.current_page], view=self)
 
     async def on_timeout(self):
-        # Disable buttons when timeout occurs
         for item in self.children:
             item.disabled = True
         try:
@@ -479,7 +455,6 @@ class PaginatorView(discord.ui.View):
             pass
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        # Ensure only command user can interact
         if interaction.user != self.user:
             await interaction.response.send_message("❌ This paginator is not for you!", ephemeral=True)
             return False
