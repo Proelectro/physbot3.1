@@ -63,7 +63,7 @@ class QotdService:
         color=discord.Color.blue()
         )
         
-        for i, (question, answer) in enumerate(self.gss["faq"]):
+        for i, (question, answer) in enumerate(self.gss["faq"].get_data()):
             if n is not None and n == i:
                 embed.add_field(
                     name=f"❓ {question}",
