@@ -360,9 +360,11 @@ class Qotd(Cog):
         
     @group.command(name="faq", description="Get nth faq")
     @requires_permission(Permission.EVERYONE)
-    async def faq(self, interaction: discord.Interaction, n: int = None):
-        await interaction.response.defer()
-        await interaction.followup.send(embed=self.qotd_service.get_faq(n))
+    async def faq(self, interaction: discord.Interaction):
+        faq_data = self.qotd_service.get_faq()
+        view = FAQView(faq_data)
+        await interaction.response.send_message("Choose a question from the dropdown below:", view=view, ephemeral=True)
+
     
     @group.command(name="end_season", description="Only for proelectro")
     @requires_permission(Permission.PROELECTRO)
@@ -409,6 +411,28 @@ class Qotd(Cog):
         await interaction.followup.send(embed=pages[0], view=view, ephemeral=True)
         view.message = await interaction.original_response()
 
+class FAQDropdown(discord.ui.Select):
+    def __init__(self, faq_data):
+        self.faq_data = faq_data  # List of (short_label, full_question, answer)
+        options = [
+            discord.SelectOption(label=short, description=full[:100])
+            for short, full, _ in faq_data
+        ]
+        super().__init__(placeholder="Select a question...", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        selected_label = self.values[0]
+        for short, full, answer in self.faq_data:
+            if short == selected_label:
+                embed = discord.Embed(title=full, description=answer, color=discord.Color.blue())
+                await interaction.response.send_message(embed=embed)
+                break
+
+class FAQView(discord.ui.View):
+    def __init__(self, faq_data):
+        super().__init__()
+        self.add_item(FAQDropdown(faq_data))
+        
 class PaginatorView(discord.ui.View):
     def __init__(self, pages, user):
         super().__init__(timeout=60)

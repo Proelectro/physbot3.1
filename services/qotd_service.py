@@ -57,21 +57,8 @@ class QotdService:
         self.lock: asyncio.Lock = asyncio.Lock()
         self.users: dict[str, str] = {}
         
-    def get_faq(self, n: int):
-        embed = discord.Embed(
-        title="📘 FAQ - Frequently Asked Questions",
-        color=discord.Color.blue()
-        )
-        
-        for i, (question, answer) in enumerate(self.gss["faq"].get_data()):
-            if n is None or n == i:
-                embed.add_field(
-                    name=f"❓ {i}) {question}",
-                    value=answer,
-                    inline=False
-                )
-        
-        return embed
+    def get_faq(self):
+        return self.gss["faq"].get_data()
 
     async def daily_question(self) -> None:
         """Post the question of the day (QOTD) every day at a specified time."""
