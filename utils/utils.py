@@ -65,7 +65,7 @@ def get_day() -> str:
 
 def get_time() -> str:
     """Get the current time in the 12-hour format. [HH:MM AM/PM UTC]"""
-    return f"<t:{time()}:R>"
+    return f"<t:{int(time())}:t>"
 
 def get_text_channel(bot: commands.Bot, channel_id: int) -> discord.TextChannel:
     channel = bot.get_channel(channel_id)
