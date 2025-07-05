@@ -64,9 +64,7 @@ class QotdService:
         """Post the question of the day (QOTD) every day at a specified time."""
         async with self.lock:
             self.live_qotd = None
-            if await utils.check_toggle_state(
-                self.bot.get_channel(config.qotd_planning), config.qotd_toggle
-            ):
+            if self.gss["data"][1, 3] == "live":
                 await self._daily_question()
             else:
                 await self.logger.info("Toggle is OFF, skipping QOTD post")
@@ -79,9 +77,11 @@ class QotdService:
     async def update_leaderboard(self) -> bool:
         """Update the leaderboard with the latest QOTD statistics."""
         async with self.lock:
-            result = await self._update_leaderboard_stats()
-            return result
-
+            if self.gss["data"][1, 3] == "live":
+                return await self._update_leaderboard_stats()
+            else:
+                return False
+            
     async def fetch(
         self,
         channel: utils.ChannelType,
