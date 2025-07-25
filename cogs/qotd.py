@@ -263,8 +263,8 @@ class Qotd(Cog):
         topic: str,
         answer: str,
         difficulty: str,
+        source: str,
         tolerance: str = "1",
-        source: str = "",
         points: str = "",
     ):
         await interaction.response.defer(ephemeral=True)
@@ -344,10 +344,83 @@ class Qotd(Cog):
     async def pending(
         self, interaction: discord.Interaction, num: Optional[int] = None
     ):
+        await interaction.response.defer()
+        embed = await self.qotd_service.pending(interaction.channel, num)
+        await interaction.followup.send(embed=embed)
+
+    @group.command(name="random", description="Fetch a random QOTD.")
+    @requires_permission(Permission.EVERYONE)
+    async def random(self, interaction: discord.Interaction, topic: Optional[str] = None, curator: Optional[discord.abc.User] = None, difficulty: Optional[str] = None):
         await interaction.response.defer(ephemeral=True)
-        await interaction.followup.send(
-            "This command will be there from bot version 3.2"
+        sc = await self.qotd_service.random(
+            interaction.channel, topic, curator, difficulty
         )
+        if sc:
+            await interaction.followup.send(
+                "Successfully fetched a random question of the day.", ephemeral=True
+            )
+        else:
+            await interaction.followup.send(
+                "No random QOTD for the given filtes is available. Maybe try different filters.",
+                ephemeral=True
+            )
+            await self.logger.info("Failed to fetch a random QOTD (no available questions)")
+    
+
+    @group.command(name="edit", description="Edit a QOTD. Only for curators.")
+    @requires_permission(Permission.QOTD_PLANNING)
+    async def edit(
+        self,
+        interaction: discord.Interaction,
+        num: int,
+        curator: Optional[discord.abc.User] = None,
+        question_links: Optional[str] = None,
+        topic: Optional[str] = None,
+        answer: Optional[str] = None,
+        difficulty: Optional[str] = None,
+        source: Optional[str] = None,
+        tolerance: Optional[str] = None,
+    ):
+        await interaction.response.defer()
+        if question_links and not all("attachments" in k for k in question_links.splitlines()):
+            await self.logger.info(
+                f"Invalid image links provided by {interaction.user}"
+            )
+            return await interaction.followup.send(
+                "Please provide a valid image attachment link. On mobile: use the 'Share' option; on desktop: open the image in a new tab and copy the URL.",
+                ephemeral=True,
+            )
+        try:
+            answer and float(answer)
+            tolerance and float(tolerance)
+        except ValueError:
+            await self.logger.warning(
+                f"QOTD Edit ValueError: invalid answer or tolerance"
+            )
+            return await interaction.followup.send(
+                "Invalid answer or tolerance. (Should be numeric)", ephemeral=True
+            )
+
+        rc = await self.qotd_service.edit(
+            num=num,
+            question_links=question_links,
+            curator=curator,
+            topic=topic,
+            answer=answer,
+            tolerance=tolerance,
+            source=source,
+            difficulty=difficulty,
+        )
+        if rc:
+            await interaction.followup.send(
+                f"QOTD #{num} edited successfully.", ephemeral=True
+            )
+            await self.logger.warning(f"QOTD #{num} edited by {interaction.user}")
+        else:
+            await interaction.followup.send(
+                f"QOTD #{num} not found", ephemeral=True
+            )
+            await self.logger.warning(f"QOTD #{num} edit failed by {interaction.user}")
 
     @group.command(
         name="verify_submission", description="To verify submission of any active qotd"

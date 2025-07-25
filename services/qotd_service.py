@@ -6,7 +6,7 @@ from typing import Union, Optional, Tuple, Any
 from discord.ext import commands
 from services.google_sheet_service import GoogleSheetService, LocalSheet
 from logger import Logger
-from collections import defaultdict
+import random
 from utils.qotd_utils import (
     COLUMN,
     get_qotd_num_to_post,
@@ -15,10 +15,9 @@ from utils.qotd_utils import (
     grade,
     get_score,
     is_correct_answer,
-    Stats,
     create_scores_embed,
     create_submission_embed,
-    get_stats
+    get_stats,
 )
 
 
@@ -56,16 +55,153 @@ class QotdService:
         self.live_qotd: Optional[int] = None
         self.lock: asyncio.Lock = asyncio.Lock()
         self.users: dict[str, str] = {}
-        
+        self.is_end_season: bool = False
+
     def get_faq(self):
         return self.gss["faq"].get_data()
+
+    async def random_qotd(
+        self,
+        channel: discord.TextChannel,
+        topic: Optional[str],
+        curator: Optional[discord.Member],
+        difficulty: Optional[str],
+    ) -> bool:
+        """Fetch a random QOTD based on the topic, curator, and difficulty."""
+        async with self.lock:
+            main_sheet = self.gss["Sheet1"]
+            valid_qotds = []
+            for num in range(1, len(main_sheet.get_data())):
+                if main_sheet[num, COLUMN["status"]] == "done":
+                    if (
+                        (topic is None or main_sheet[num, COLUMN["topic"]] == topic)
+                        and (
+                            curator is None
+                            or main_sheet[num, COLUMN["creator"]] == str(curator.name)
+                        )
+                        and (
+                            difficulty is None
+                            or main_sheet[num, COLUMN["difficulty"]] in difficulty
+                        )
+                    ):
+                        valid_qotds.append(num)
+            if not valid_qotds:
+                return False
+            qotd_num = random.choice(valid_qotds)
+            await utils.post_question(
+                channel=channel,
+                num=main_sheet[qotd_num, COLUMN["qotd_num"]],
+                date=main_sheet[qotd_num, COLUMN["date"]],
+                day=main_sheet[qotd_num, COLUMN["day"]],
+                links=main_sheet[qotd_num, COLUMN["question link"]],
+                creator=main_sheet[qotd_num, COLUMN["creator"]],
+                difficulty=main_sheet[qotd_num, COLUMN["difficulty"]],
+            )
+            return True
+
+    async def pending(
+        self, channel: discord.TextChannel, num: Optional[int]
+    ) -> discord.Embed:
+        """Get the pending QOTD or a specific QOTD if num is provided."""
+        async with self.lock:
+
+            main_sheet = self.gss["Sheet1"]
+            if num is None:
+                embed = discord.Embed(
+                    title="Pending QOTD",
+                    color=discord.Color.yellow(),
+                )
+                for i in range(1, len(main_sheet.get_data())):
+                    if main_sheet[i, COLUMN["status"]] == "pending":
+                        embed.add_field(
+                            name=f"QOTD {i}",
+                            value=(f"{main_sheet[i, COLUMN['question link']]}"),
+                            inline=False,
+                        )
+                return embed
+            else:
+                if (
+                    num < 1
+                    or num >= len(main_sheet.get_data())
+                    or main_sheet[num, COLUMN["status"]] != "pending"
+                ):
+                    await self.logger.warning(f"Invalid QOTD number: {num}")
+                    return discord.Embed(
+                        title="Error",
+                        description="Invalid QOTD number",
+                        color=discord.Color.red(),
+                    )
+                embed = discord.Embed(
+                    title=f"Pending QOTD #{num}",
+                    color=discord.Color.green(),
+                )
+                embed.add_field(
+                    name="Question Link",
+                    value=main_sheet[num, COLUMN["question link"]],
+                    inline=False,
+                )
+                await utils.post_question(
+                    channel=channel,
+                    num=main_sheet[num, COLUMN["qotd_num"]],
+                    date=main_sheet[num, COLUMN["date"]],
+                    day=main_sheet[num, COLUMN["day"]],
+                    links=main_sheet[num, COLUMN["question link"]],
+                    creator=main_sheet[num, COLUMN["creator"]],
+                    source=main_sheet[num, COLUMN["source"]],
+                    difficulty=main_sheet[num, COLUMN["difficulty"]],
+                    answer=main_sheet[num, COLUMN["answer"]],
+                    tolerance=main_sheet[num, COLUMN["tolerance"]],
+                )
+                return embed
+
+    async def edit(
+        self,
+        num: int,
+        question_links: str,
+        curator: str,
+        topic: str,
+        answer: str,
+        tolerance: str,
+        source: str,
+        difficulty: str,
+    ) -> bool:
+        async with self.lock:
+            main_sheet = self.gss["Sheet1"]
+            if num < 1 or num >= len(main_sheet.get_data()):
+                await self.logger.warning(f"Invalid QOTD number: {num}")
+                return False
+
+            main_sheet[num, COLUMN["question link"]] = (
+                question_links or main_sheet[num, COLUMN["question link"]]
+            )
+            main_sheet[num, COLUMN["creator"]] = (
+                curator or main_sheet[num, COLUMN["creator"]]
+            )
+            main_sheet[num, COLUMN["topic"]] = topic or main_sheet[num, COLUMN["topic"]]
+            main_sheet[num, COLUMN["answer"]] = (
+                answer or main_sheet[num, COLUMN["answer"]]
+            )
+            main_sheet[num, COLUMN["tolerance"]] = (
+                tolerance or main_sheet[num, COLUMN["tolerance"]]
+            )
+            main_sheet[num, COLUMN["source"]] = (
+                source or main_sheet[num, COLUMN["source"]]
+            )
+            main_sheet[num, COLUMN["difficulty"]] = (
+                difficulty or main_sheet[num, COLUMN["difficulty"]]
+            )
+            main_sheet.commit()
+            await self.logger.info(f"Updated QOTD {num} successfully")
+            return True
 
     async def daily_question(self) -> None:
         """Post the question of the day (QOTD) every day at a specified time."""
         async with self.lock:
             self.live_qotd = None
             if self.gss["data"][1, 3] == "live":
+                await self._update_leaderboard_stats()
                 await self._daily_question()
+                await self._update_leaderboard_stats()
             else:
                 await self.logger.info("Toggle is OFF, skipping QOTD post")
 
@@ -81,7 +217,7 @@ class QotdService:
                 return await self._update_leaderboard_stats()
             else:
                 return False
-            
+
     async def fetch(
         self,
         channel: utils.ChannelType,
@@ -106,7 +242,6 @@ class QotdService:
                 day=self.gss["Sheet1"][qotd_num, COLUMN["day"]],
                 links=self.gss["Sheet1"][qotd_num, COLUMN["question link"]],
                 creator=self.gss["Sheet1"][qotd_num, COLUMN["creator"]],
-                source=self.gss["Sheet1"][qotd_num, COLUMN["source"]],
                 difficulty=self.gss["Sheet1"][qotd_num, COLUMN["difficulty"]],
             )
             return True
@@ -140,7 +275,9 @@ class QotdService:
                     )
                     return post
                 else:
-                    await self.logger.warning(f"Solution not available for QOTD {qotd_num}")
+                    await self.logger.warning(
+                        f"Solution not available for QOTD {qotd_num}"
+                    )
                     return "Solution not available yet"
 
     async def submit(
@@ -204,8 +341,10 @@ class QotdService:
             scores = await self._get_scores(str(user.id))
             embed = create_scores_embed(user.name, scores)
             return embed
-    
-    async def verify_submissions(self, user: Union[discord.User, discord.Member], qotd_num: int) -> Optional[discord.Embed]:
+
+    async def verify_submissions(
+        self, user: Union[discord.User, discord.Member], qotd_num: int
+    ) -> Optional[discord.Embed]:
         """Send the status of the QOTD to the user."""
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
@@ -221,7 +360,6 @@ class QotdService:
                 await self.logger.warning(embed=embed)
                 return embed
             return None
-
 
     async def _submit(
         self, interaction: discord.Interaction, qotd_num: Optional[int], answer_str: str
@@ -284,6 +422,12 @@ class QotdService:
                 embed=embed
             )
             if is_correct:
+                qotd_discussion = utils.get_text_channel(
+                    self.bot, config.qotd_discussion
+                )
+                await qotd_discussion.send(
+                    f"{user.mention} has solved QOTD #{qotd_num}\n *Please let me know if you have better congratulations message to send.*"
+                )
                 member = phods.get_member(user.id)
                 if member:
                     role = phods.get_role(config.qotd_solver)
@@ -319,7 +463,9 @@ class QotdService:
         try:
             self.gss.create_sheet(f"qotd {qotd_num_to_post}")
         except Exception as e:
-            await self.logger.error("Unable to create the sheet, maybe already existed", e)
+            await self.logger.error(
+                "Unable to create the sheet, maybe already existed", e
+            )
         # Update the main sheet with the new QOTD details
         await self.logger.info(f"Setting QOTD {qotd_num_to_post} status to live")
         main_sheet[qotd_num_to_post, COLUMN["status"]] = "live"
@@ -341,7 +487,7 @@ class QotdService:
         assert qotd_solver_role, "QOTD Solver role not found"
         await utils.remove_roles(qotd_solver_role)
         await self.logger.info("Reset solver roles")
-        # stats 
+        # stats
         stats_embed = get_statistics_embed(
             num=qotd_num_to_post,
             creator=main_sheet[qotd_num_to_post, COLUMN["creator"]],
@@ -350,7 +496,6 @@ class QotdService:
         assert isinstance(
             question_of_the_day_channel, discord.TextChannel
         ), "Question of the Day channel not found"
-        
 
         stats_msg = await question_of_the_day_channel.send(embed=stats_embed)
         assert self.bot.user
@@ -358,7 +503,7 @@ class QotdService:
             f"<@&{config.qotd_role}> to submit your answer use /qotd submit command in my({self.bot.user.mention}) DM."
         )
         main_sheet[qotd_num_to_post, COLUMN["stats"]] = str(stats_msg.id)
-        
+
         # leaderboard
         leader_board_channel = self.bot.get_channel(config.leaderboard)
         assert isinstance(
@@ -368,13 +513,10 @@ class QotdService:
             "Placeholder for leaderboard message"
         )
         main_sheet[qotd_num_to_post, COLUMN["leaderboard"]] = str(leaderboard_msg.id)
-        
-        # final commit 
+
+        # final commit
         main_sheet.commit()
         await self.logger.info("Daily question processing completed")
-
-
-   
 
     async def _get_scores(self, user_id: str):
         main_sheet = self.gss["Sheet1"]
@@ -390,10 +532,46 @@ class QotdService:
                 stats = get_stats(qotd_sheet, ans, tolerance)
                 for user, *sub in qotd_sheet.get_data():
                     if user == user_id:
-                        scores.append((f"Qotd {num}",get_score(sub, ans, tolerance, stats)))
+                        scores.append(
+                            (f"Qotd {num}", get_score(sub, ans, tolerance, stats))
+                        )
         scores.append(("Total", sum(k[1] for k in scores)))
         return scores
-        
+
+    async def end_season(self) -> None:
+        """End the current season and reset the QOTD data."""
+        async with self.lock:
+            if self.is_end_season:
+                self.live_qotd = None
+                self.is_end_season = False
+                self._update_leaderboard_stats()
+                await self.logger.info("Ending the season")
+                main_sheet = self.gss["Sheet1"]
+                active_and_live = []
+                for num in range(1, len(main_sheet.get_data())):
+                    if main_sheet[num, COLUMN["status"]] in ["active", "live"]:
+                        active_and_live.append(num)
+                        main_sheet[num, COLUMN["status"]] = "done"
+                main_sheet.commit()
+                await self.logger.info("main sheet updated")
+                for num in active_and_live:
+                    del self.gss[f"qotd {num}"]
+                await self.logger.info("Deleted all active QOTD sheets")
+                data_sheet = self.gss["data"]
+                data_sheet[1, 2] = str(int(data_sheet[1, 2]) + 1)
+                data_sheet[1, 3] = "live"
+                data_sheet[1, 1] = "0"
+                data_sheet.commit()
+                await self.logger.info("Data sheet updated for new season")
+                await utils.remove_roles(
+                    self.bot.get_guild(config.phods).get_role(config.qotd_solver)
+                )
+                await self.logger.info(
+                    f"Ended season with {len(active_and_live)} QOTDs"
+                )
+            else:
+                self.is_end_season = True
+                return "Use the command again to end the season."
 
     async def _update_leaderboard_stats(self) -> bool:
         await self.logger.info("Updating leaderboard stats")
@@ -413,8 +591,10 @@ class QotdService:
             season=season,
             time=time,
         )
-        
-        total_scores = {user: float(score) for user, score in self.gss["Leaderboard"].get_data()}
+
+        total_scores = {
+            user: float(score) for user, score in self.gss["Leaderboard"].get_data()
+        }
         for num in range(1, len(main_sheet.get_data())):
             if main_sheet[num, COLUMN["status"]] in ["active", "live"]:
                 ans = main_sheet[num, COLUMN["answer"]]
@@ -423,14 +603,14 @@ class QotdService:
                 scores, stats = grade(qotd_sheet, ans, tolerance)
                 for user, points in scores.items():
                     total_scores[user] = total_scores.get(user, 0.0) + points
-        
-        
+
         for rank, (userid, point) in enumerate(
-            sorted(total_scores.items(), key=lambda x: float(x[1]), reverse=True)[:30], start=1
+            sorted(total_scores.items(), key=lambda x: float(x[1]), reverse=True)[:29],
+            start=1,
         ):
             rank_dot = f"{rank}."
             username = await self._get_user_name_or_id(userid)
-            message += f"\n{rank_dot:4} {username[:30]:30} {float(point):.3f}"
+            message += f"\n{rank_dot:4} {username[:29]:29} {float(point):.3f}"
         message += "\n```"
         leaderboard_channel = self.bot.get_channel(config.leaderboard)
         assert isinstance(

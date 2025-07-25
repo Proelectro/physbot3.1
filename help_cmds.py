@@ -28,6 +28,10 @@ cmds_everyone = [
         "/qotd faq [num]",
         "For experianced user to give a quick reply to common questions.",
     ),
+    (
+        "/qotd random [topic] [curator] [difficulty]",
+        "Fetch a random QOTD based on optional filters like topic, curator, or difficulty. If no filters are provided, it returns any random QOTD.",
+    )
 ]
 cmds_creator = [
     (
@@ -40,7 +44,7 @@ cmds_creator = [
     ),
     (
         "/qotd pending [num]",
-        "List QOTD uploads awaiting approval or scheduling. Optionally filter by question number to see details of a specific pending item. (Coming in v3.2)",
+        "List QOTD uploads awaiting approval or scheduling. Optionally filter by question number to see details of a specific pending item.",
     ),
     (
         "/qotd update_leaderboard",

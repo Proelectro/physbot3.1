@@ -41,8 +41,14 @@ class LocalSheet:
     
     def commit(self) -> None:
         if self._dirty:
-            self.sheet.update(self._data)
-            self._dirty = False                    
+            for attempt in range(3):
+                try:
+                    self.sheet.update(self._data)
+                    self._dirty = False
+                    break
+                except gspread.exceptions.APIError as e:
+                    if attempt == 2:
+                        raise e                    
 class GoogleSheetService:
     def __init__(self, workbook_name: str) -> None:
         self.gc: gspread.Client = gspread.service_account(filename='secrets/creds.json')
