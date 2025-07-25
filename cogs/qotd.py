@@ -361,7 +361,7 @@ class Qotd(Cog):
             )
         else:
             await interaction.followup.send(
-                "No random QOTD for the given filtes is available. Maybe try different filters.",
+                "No random QOTD for the given filters is available. Maybe try different filters.",
                 ephemeral=True
             )
             await self.logger.info("Failed to fetch a random QOTD (no available questions)")
