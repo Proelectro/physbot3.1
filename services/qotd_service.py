@@ -60,7 +60,7 @@ class QotdService:
     def get_faq(self):
         return self.gss["faq"].get_data()
 
-    async def random_qotd(
+    async def random(
         self,
         channel: discord.TextChannel,
         topic: Optional[str],
