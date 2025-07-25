@@ -350,7 +350,7 @@ class Qotd(Cog):
 
     @group.command(name="random", description="Fetch a random QOTD.")
     @requires_permission(Permission.EVERYONE)
-    async def random(self, interaction: discord.Interaction, topic: Optional[str] = None, curator: Optional[discord.abc.User] = None, difficulty: Optional[str] = None):
+    async def random(self, interaction: discord.Interaction, topic: Optional[str] = None, curator: Optional[discord.User] = None, difficulty: Optional[str] = None):
         await interaction.response.defer(ephemeral=True)
         sc = await self.qotd_service.random(
             interaction.channel, topic, curator, difficulty
@@ -373,7 +373,7 @@ class Qotd(Cog):
         self,
         interaction: discord.Interaction,
         num: int,
-        curator: Optional[discord.abc.User] = None,
+        curator: Optional[discord.User] = None,
         question_links: Optional[str] = None,
         topic: Optional[str] = None,
         answer: Optional[str] = None,
