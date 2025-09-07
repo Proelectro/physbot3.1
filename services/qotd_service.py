@@ -446,7 +446,8 @@ class QotdService:
                 qotd_planning, discord.TextChannel
             ), "QOTD Creator channel not found"
             await qotd_planning.send(
-                f"<@&{config.qotd_creator}> Toggle is on but no QOTD is available to post. Previous Qotd is still live."
+                # f"<@&{config.qotd_creator}> Toggle is on but no QOTD is available to post. Previous Qotd is still live."
+                f"<@{1179953427661475871}> Toggle is on but no QOTD is available to post. Previous Qotd is still live."
             )
             return
 
