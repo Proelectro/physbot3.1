@@ -197,12 +197,13 @@ class QotdService:
     async def daily_question(self) -> None:
         """Post the question of the day (QOTD) every day at a specified time."""
         async with self.lock:
-            self.live_qotd = None
             if self.gss["data"][1, 3] == "live":
                 await self._update_leaderboard_stats()
+                self.live_qotd = None
                 await self._daily_question()
                 await self._update_leaderboard_stats()
             else:
+                self.live_qotd = None
                 await self.logger.info("Toggle is OFF, skipping QOTD post")
 
     async def clear(self):
@@ -429,7 +430,7 @@ class QotdService:
                     self.bot, config.qotd_logs
                 )
                 await qotd_logs.send(
-                    f"{user.nick or user.name} has solved QOTD #{qotd_num} !!!"
+                    f"{user.name} has solved QOTD #{qotd_num} !!!"
                 )
                 member = phods.get_member(user.id)
                 if member:
