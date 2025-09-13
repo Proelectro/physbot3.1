@@ -426,7 +426,7 @@ class QotdService:
                     self.bot, config.qotd_discussion
                 )
                 await qotd_discussion.send(
-                    f"{user.mention} has solved QOTD #{qotd_num}\n *Please let me know if you have better congratulations message to send.*"
+                    f"{user.mention} has solved QOTD #{qotd_num}!!!\nCongratulations! 🎉"
                 )
                 member = phods.get_member(user.id)
                 if member:
