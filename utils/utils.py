@@ -24,7 +24,8 @@ async def check_toggle_state(channel: ChannelType, toggle_message_id: int) -> bo
 async def post_question(channel: ChannelType, num: str, date: str, day: str,
                         links: str, creator: str, source: Optional[str] = None, points: Optional[int] = None,
                         difficulty: Optional[str] = None, topic: Optional[str] = None,
-                        answer: Optional[str] = None, tolerance: str = "0.01") -> None:
+                        answer: Optional[str] = None, tolerance: str = "0.01",
+                        announce: bool = False) -> None:
     """Post a formatted question of the day message to the specified channel."""
     post = f'**QOTD {num}**\n**{date}, {day}**\n{links}'
     post2 = f'QOTD Creator: **{creator}**\n'
@@ -34,9 +35,11 @@ async def post_question(channel: ChannelType, num: str, date: str, day: str,
     post6 = f'Category: {topic}\n'if topic is not None else ""
     post7 = f'Answer: {answer} Tolerance: {tolerance}' if answer is not None else ""
     
-    await channel.send(post) # type: ignore
-    await channel.send(post2 + post3 + post4 + post5 + post6 + post7) # type: ignore
-    
+    msg1 = await channel.send(post) # type: ignore
+    msg2 = await channel.send(post2 + post3 + post4 + post5 + post6 + post7) # type: ignore
+    if announce:
+        await msg1.publish()
+        await msg2.publish()
 
 async def remove_roles(role: discord.Role) -> None:
     """Removes a specific role from all members in the guild.

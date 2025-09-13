@@ -446,8 +446,8 @@ class QotdService:
                 qotd_planning, discord.TextChannel
             ), "QOTD Creator channel not found"
             await qotd_planning.send(
-                # f"<@&{config.qotd_creator}> Toggle is on but no QOTD is available to post. Previous Qotd is still live."
-                f"<@{838843106954575974}> Toggle is on but no QOTD is available to post. Previous Qotd is still live."
+                f"<@&{config.qotd_creator}> Toggle is on but no QOTD is available to post. Previous Qotd is still live."
+                # f"<@{838843106954575974}> Toggle is on but no QOTD is available to post. Previous Qotd is still live."
             )
             return
 
@@ -480,6 +480,7 @@ class QotdService:
             links=main_sheet[qotd_num_to_post, COLUMN["question link"]],
             creator=main_sheet[qotd_num_to_post, COLUMN["creator"]],
             difficulty=main_sheet[qotd_num_to_post, COLUMN["difficulty"]],
+            announce=True,
         )
         await self.logger.info("Posted new QOTD")
         phods = self.bot.get_guild(config.phods)
