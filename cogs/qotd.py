@@ -156,17 +156,17 @@ class Qotd(Cog):
                 file=discord.File(os.path.join("images", "verdict.png")),
             )
 
-    @tasks.loop(hours=1)
-    @catch_errors
-    async def update_leaderboard_hrs(self):
-        await self.logger.info("Leader board update started")
-        await self.qotd_service.update_leaderboard()
-        await self.logger.info("Leader board update completed")
+    # @tasks.loop(hours=1)
+    # @catch_errors
+    # async def update_leaderboard_hrs(self):
+    #     await self.logger.info("Leader board update started")
+    #     await self.qotd_service.update_leaderboard()
+    #     await self.logger.info("Leader board update completed")
 
-    @update_leaderboard_hrs.before_loop
-    @catch_errors
-    async def before_hourly_task(self):
-        await self.bot.wait_until_ready()
+    # @update_leaderboard_hrs.before_loop
+    # @catch_errors
+    # async def before_hourly_task(self):
+    #     await self.bot.wait_until_ready()
 
     @tasks.loop(time=time(16, 30))  # 16:30 UTC = 22:00 IST
     @catch_errors

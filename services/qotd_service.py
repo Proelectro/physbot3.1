@@ -285,7 +285,9 @@ class QotdService:
     ) -> None:
         """Submit an answer for the QOTD."""
         async with self.lock:
-            await self._submit(interaction, qotd_num, answer)
+            action_needed = await self._submit(interaction, qotd_num, answer)
+            if action_needed:
+                await self._update_leaderboard_stats()
 
     async def upload(
         self,
@@ -363,17 +365,17 @@ class QotdService:
 
     async def _submit(
         self, interaction: discord.Interaction, qotd_num: Optional[int], answer_str: str
-    ) -> None:
+    ) -> bool:
         main_sheet = self.gss["Sheet1"]
         user = interaction.user
-
+        action_needed = False
         qotd_num = qotd_num or self._get_live_qotd_num()
         if qotd_num is None:
             await self.logger.warning("No live QOTD for submission")
             await interaction.followup.send(
                 "No live QOTD available to submit an answer for."
             )
-            return
+            return False
         if (
             qotd_num < 1
             or qotd_num >= len(main_sheet.get_data())
@@ -381,14 +383,14 @@ class QotdService:
         ):
             await self.logger.warning(f"Invalid QOTD number {qotd_num} for submission")
             await interaction.followup.send("Invalid QOTD number")
-            return
+            return False
         try:
             answer = float(answer_str)
         except ValueError:
             await interaction.followup.send(
                 "Invalid answer format. Please provide a numeric answer."
             )
-            return
+            return False
         correct_ans = float(main_sheet[qotd_num, COLUMN["answer"]])
         tolerance = float(main_sheet[qotd_num, COLUMN["tolerance"]])
         is_correct = is_correct_answer(correct_ans, answer, tolerance)
@@ -422,10 +424,11 @@ class QotdService:
                 embed=embed
             )
             if is_correct:
-                qotd_discussion = utils.get_text_channel(
-                    self.bot, config.qotd_discussion
+                action_needed = True
+                qotd_logs = utils.get_text_channel(
+                    self.bot, config.qotd_logs
                 )
-                await qotd_discussion.send(
+                await qotd_logs.send(
                     f"{user.mention} has solved QOTD #{qotd_num} !!!\nCongratulations! 🎉"
                 )
                 member = phods.get_member(user.id)
@@ -435,6 +438,7 @@ class QotdService:
                         await member.add_roles(role)
                         await self.logger.info(f"Added solver role to user {user.id}")
         await interaction.followup.send(embed=embed)
+        return action_needed
 
     async def _daily_question(self) -> None:
         main_sheet = self.gss["Sheet1"]
