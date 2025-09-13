@@ -124,7 +124,7 @@ def get_statistics_embed(
     total_attempts=0,
 ) -> discord.Embed:
     embed = discord.Embed(
-        title=f"Live Statistics for QoTD {num}",
+        title=f"Statistics for QoTD {num}\nLast Updated at {utils.get_time()}",
     )
     embed.set_footer(text=f"Creator: {creator}")
     embed.add_field(name="Base Points", value=f"{base:.3f}")

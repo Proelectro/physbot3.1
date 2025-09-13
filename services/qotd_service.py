@@ -426,7 +426,7 @@ class QotdService:
                     self.bot, config.qotd_discussion
                 )
                 await qotd_discussion.send(
-                    f"{user.mention} has solved QOTD #{qotd_num}!!!\nCongratulations! 🎉"
+                    f"{user.mention} has solved QOTD #{qotd_num} !!!\nCongratulations! 🎉"
                 )
                 member = phods.get_member(user.id)
                 if member:
@@ -447,7 +447,6 @@ class QotdService:
             ), "QOTD Creator channel not found"
             await qotd_planning.send(
                 f"<@&{config.qotd_creator}> Toggle is on but no QOTD is available to post. Previous Qotd is still live."
-                # f"<@{838843106954575974}> Toggle is on but no QOTD is available to post. Previous Qotd is still live."
             )
             return
 
