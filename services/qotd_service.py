@@ -429,7 +429,7 @@ class QotdService:
                     self.bot, config.qotd_logs
                 )
                 await qotd_logs.send(
-                    f"{user.mention} has solved QOTD #{qotd_num} !!!\nCongratulations! 🎉"
+                    f"{user.nick or user.name} has solved QOTD #{qotd_num} !!!"
                 )
                 member = phods.get_member(user.id)
                 if member:
