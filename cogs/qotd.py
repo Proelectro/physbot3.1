@@ -148,7 +148,7 @@ class Qotd(Cog):
                 file=discord.File(os.path.join("images", "submit.png")),
             )
             await message.channel.send(
-                "Then type the number and respective answer to the question you want to submit. As shown below.",
+                "Then type the answer to the question to submit. As shown below.",
                 file=discord.File(os.path.join("images", "qotd.png")),
             )
             await message.channel.send(
