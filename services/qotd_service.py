@@ -611,7 +611,7 @@ class QotdService:
                     total_scores[user] = total_scores.get(user, 0.0) + points
 
         for rank, (userid, point) in enumerate(
-            sorted(total_scores.items(), key=lambda x: float(x[1]), reverse=True)[:29],
+            sorted(total_scores.items(), key=lambda x: float(x[1]), reverse=True)[:30],
             start=1,
         ):
             rank_dot = f"{rank}."
