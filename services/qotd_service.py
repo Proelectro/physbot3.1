@@ -96,6 +96,7 @@ class QotdService:
                 links=main_sheet[qotd_num, COLUMN["question link"]],
                 creator=main_sheet[qotd_num, COLUMN["creator"]],
                 difficulty=main_sheet[qotd_num, COLUMN["difficulty"]],
+                topic=main_sheet[qotd_num, COLUMN["topic"]],
             )
             return True
 
@@ -151,6 +152,8 @@ class QotdService:
                     difficulty=main_sheet[num, COLUMN["difficulty"]],
                     answer=main_sheet[num, COLUMN["answer"]],
                     tolerance=main_sheet[num, COLUMN["tolerance"]],
+                    topic=main_sheet[num, COLUMN["topic"]],
+                    
                 )
                 return embed
 
@@ -244,6 +247,7 @@ class QotdService:
                 links=self.gss["Sheet1"][qotd_num, COLUMN["question link"]],
                 creator=self.gss["Sheet1"][qotd_num, COLUMN["creator"]],
                 difficulty=self.gss["Sheet1"][qotd_num, COLUMN["difficulty"]],
+                topic=self.gss["Sheet1"][qotd_num, COLUMN["topic"]],
             )
             return True
 

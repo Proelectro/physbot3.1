@@ -41,12 +41,12 @@ def valid_permission(
         ok = user.id == config.proelectro
         msg = "This command is only for Proelectro"
     elif level == Permission.QOTD_PLANNING:
-        ok = channel.id in (config.qotd_botspam, config.qotd_planning)
+        ok = channel.id in (config.qotd_botspam, config.qotd_planning) or user.id == config.proelectro
         msg = "This command only works in QOTD planning channels i.e. planning and botspam"
     elif level == Permission.QOTD_CREATOR:
         if isinstance(user, discord.Member):
             roles = [r.id for r in user.roles]
-            ok = (config.qotd_creator in roles) or (channel.id in (config.qotd_botspam, config.qotd_planning))
+            ok = (config.qotd_creator in roles) or (channel.id in (config.qotd_botspam, config.qotd_planning)) or (user.id == config.proelectro)
         else:
             ok = False
         msg = "You must have the QOTD-Creator role to run this command"
@@ -229,7 +229,7 @@ class Qotd(Cog):
     @group.command(
         name="update_solution", description="Update the solution for a specific QOTD."
     )
-    @requires_permission(Permission.QOTD_PLANNING)
+    @requires_permission(Permission.QOTD_CREATOR)
     async def update_solution(
         self, interaction: discord.Interaction, num: int, link: str
     ):
@@ -434,6 +434,17 @@ class Qotd(Cog):
             await interaction.followup.send(embed=embed)
         else:
             await interaction.followup.send("Invalid qotd number please choose an active/ live qotd.")
+            
+    @group.command(name="get_submission", description="Check the submissions of any active qotd of a user")
+    @requires_permission(Permission.QOTD_PLANNING)
+    async def get_submission(self, interaction: discord.Interaction, user: discord.User, num: int):
+        await interaction.response.defer()
+        embed = await self.qotd_service.verify_submissions(user, num)
+        if embed:
+            await interaction.followup.send(embed=embed)
+        else:
+            await interaction.followup.send("Invalid qotd number please choose an active/ live qotd.")
+    
 
     @group.command(name="score", description="Detailed transcript of score")
     @requires_permission(Permission.EVERYONE)

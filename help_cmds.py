@@ -43,11 +43,15 @@ cmds_creator = [
         "Upload or correct the solution image/ pdf link(s) for an existing QOTD. Use this if the solution is wrong or missing.",
     ),
     (
-        "/qotd pending [num]",
+        "/qotd pending <num>",
         "List QOTD uploads awaiting approval or scheduling. Optionally filter by question number to see details of a specific pending item.",
     ),
     (
         "/qotd update_leaderboard",
         "Recalculate and post the leaderboard for the current live QOTD. Updates ranks based on recent submissions according to scoring rules.",
+    ),
+    (
+        "/qotd get_submissions <user> <num>",
+        "Get the submissions of a specific user for a specific QOTD.",
     )
 ]
