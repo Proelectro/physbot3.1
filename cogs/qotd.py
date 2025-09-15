@@ -437,9 +437,9 @@ class Qotd(Cog):
             
     @group.command(name="get_submission", description="Check the submissions of any active qotd of a user")
     @requires_permission(Permission.QOTD_PLANNING)
-    async def get_submission(self, interaction: discord.Interaction, user: discord.User, num: int):
+    async def get_submission(self, interaction: discord.Interaction, participant: discord.User, num: int):
         await interaction.response.defer()
-        embed = await self.qotd_service.verify_submissions(user, num)
+        embed = await self.qotd_service.verify_submissions(participant, num)
         if embed:
             await interaction.followup.send(embed=embed)
         else:
