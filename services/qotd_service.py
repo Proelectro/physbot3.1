@@ -364,7 +364,7 @@ class QotdService:
                         sub = submissions
                         break
                 embed = create_submission_embed(user, qotd_num, sub, answer, tolerance)
-                await self.logger.warning(embed=embed)
+                # await self.logger.warning(embed=embed)
                 return embed
             return None
 
