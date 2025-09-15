@@ -35,8 +35,10 @@ class Miscellaneous(Cog):
         return True
     
     @app_commands.command(name="attachment_link",description="Converts attachment to link.")
-    async def attachment_link(self, interaction: discord.Interaction,attachment: discord.Attachment):
-        await interaction.response.send_message(content=attachment.url)
+    async def attachment_link(self, interaction: discord.Interaction, attachment: discord.Attachment):
+        await interaction.response.defer()
+        msg = await interaction.channel.send(file=await attachment.to_file())
+        await interaction.followup.send(content=msg.attachments[0].url)
         return False
 
     @app_commands.command(name="helper", description="To ping helpers.")
@@ -65,7 +67,7 @@ class Miscellaneous(Cog):
         if isinstance(error, app_commands.CommandOnCooldown):
             await interaction.response.send_message(str(error), ephemeral=True)
     async def cog_app_command_error(self, interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
-        await self.bot.get_channel(config.log2).send((await self.bot.fetch_user(config.proelectro)).mention,embed=discord.Embed(color=config.red,title=str(interaction.user),description=str(error)))
+        await self.bot.get_channel(config.log_error).send((await self.bot.fetch_user(config.proelectro)).mention,embed=discord.Embed(color=config.red,title=str(interaction.user),description=str(error)))
 
 async def setup(bot):
     await bot.add_cog(Miscellaneous(bot))
