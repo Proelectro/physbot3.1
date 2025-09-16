@@ -459,6 +459,23 @@ class Qotd(Cog):
             await interaction.followup.send(f"Failed to update submission. Invalid QOTD number or submissions are not numeric.")
             await self.logger.warning(f"Submission update failed for {participant} for QOTD #{num} by {interaction.user}")
     
+    @group.command(name="update_offset", description="Update the offset score for a user. Only for curators")
+    @requires_permission(Permission.QOTD_PLANNING)
+    async def update_offset(self, interaction: discord.Interaction, participant: discord.User, offset: str):
+        await interaction.response.defer()
+        try:
+            offset_val = float(offset)
+        except ValueError:
+            return await interaction.followup.send("Invalid offset value. Please provide a numeric value.")
+        rc, previous_offset = await self.qotd_service.update_offset(participant, offset_val)
+        if rc:
+            await interaction.followup.send(f"Offset updated successfully for {participant.mention}.\nPrevious offset: {previous_offset}\nNew offset: {offset_val}")
+            await self.logger.warning(f"Offset of {participant} updated by {interaction.user}")
+        else:
+            await interaction.followup.send(f"Failed to update offset. Unknown error occurred Contact Proelectro.")
+            await self.logger.warning(f"Offset update failed for {participant} by {interaction.user}")
+    
+
 
     @group.command(name="score", description="Detailed transcript of score")
     @requires_permission(Permission.EVERYONE)

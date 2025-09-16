@@ -390,15 +390,36 @@ class QotdService:
                 previous_submissions = "No Submissions"
                 for i, (userid, *submissions) in enumerate(data):
                     if userid == str(user.id):
-                        data[i] = [str(user.id)] + [new_submissions]
+                        data[i] = [str(user.id)] + new_submissions
                         previous_submissions = ", ".join(submissions)
                         break
                 else:
-                    data.append([str(user.id)] + [new_submissions])
+                    data.append([str(user.id)] + new_submissions)
                 qotd_sheet.update_data(data)
                 qotd_sheet.commit()
                 return True, previous_submissions
             return False, ""
+
+    async def update_offset(
+        self,
+        user: Union[discord.User, discord.Member],
+        offset: str,
+    ) -> Tuple[bool, str]:
+        """Update the user's offset in the leaderboard."""
+        async with self.lock:
+            leaderboard_sheet = self.gss["Leaderboard"]
+            data = leaderboard_sheet.get_data()
+            previous_offset = "No Offset"
+            for i, (userid, score) in enumerate(data):
+                if userid == str(user.id):
+                    previous_offset = score
+                    data[i] = [str(user.id), offset]
+                    break
+            else:
+                data.append([str(user.id), offset])
+            leaderboard_sheet.update_data(data)
+            leaderboard_sheet.commit()
+            return True, previous_offset
 
     async def _submit(
         self, interaction: discord.Interaction, qotd_num: Optional[int], answer_str: str
