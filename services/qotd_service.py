@@ -421,6 +421,35 @@ class QotdService:
             leaderboard_sheet.commit()
             return True, previous_offset
 
+    async def clear_submissions(
+        self,
+        qotd_num: int,
+        user: Optional[Union[discord.User, discord.Member]] = None,
+    ) -> bool:
+        """Clear submissions for a specific QOTD or for a specific user."""
+        async with self.lock:
+            main_sheet = self.gss["Sheet1"]
+            if (
+                qotd_num < 1
+                or qotd_num >= len(main_sheet.get_data())
+                or main_sheet[qotd_num, COLUMN["status"]] not in ["live", "active"]
+            ):
+                await self.logger.warning(f"Invalid QOTD number cmd clear_submissions: {qotd_num}")
+                return False
+            qotd_sheet = self.gss[f"qotd {qotd_num}"]
+            data = qotd_sheet.get_data()
+            if user is None:
+                qotd_sheet.update_data([])
+                qotd_sheet.commit()
+                return True
+            else:
+                new_data = [row for row in data if row[0] != str(user.id)]
+                if len(new_data) == len(data):
+                    return False
+                qotd_sheet.update_data(new_data)
+                qotd_sheet.commit()
+                return True
+
     async def _submit(
         self, interaction: discord.Interaction, qotd_num: Optional[int], answer_str: str
     ) -> bool:

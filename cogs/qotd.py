@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import time, datetime
 import os
 import traceback
 import functools
@@ -130,6 +130,7 @@ class Qotd(Cog):
         self.logger = Logger(bot)
         self.qotd_service = QotdService(bot)
         self.daily_qotd_loop.start()
+        self.empty_run = datetime.now()
         # self.update_leaderboard_hrs.start()
 
     # General
@@ -475,7 +476,26 @@ class Qotd(Cog):
             await interaction.followup.send(f"Failed to update offset. Unknown error occurred Contact Proelectro.")
             await self.logger.warning(f"Offset update failed for {participant} by {interaction.user}")
     
-
+    @group.command(name="clear_submissions", description="Clear all submissions of a qotd. NOTE THIS ACTION IS IRREVERSIBLE. Only for curators")
+    @requires_permission(Permission.QOTD_PLANNING)
+    async def clear_submissions(self, interaction: discord.Interaction, qotd_num: int, participant: Optional[discord.User] = None):
+        await interaction.response.defer()
+        if participant is None:
+            self.empty_run = datetime.now()
+            self.logger.warning(f"Clear submissions initiated by {interaction.user} for QOTD #{qotd_num}. Awaiting confirmation.")
+            await interaction.followup.send(f"THIS ACTION IS IRREVERSIBLE. If you are sure you want to clear submissions of all users for this qotd, please re-run the command with the user as {self.bot.user.mention}.")
+        else:
+            if participant.id == self.bot.user.id:
+                if (datetime.now() - self.empty_run).total_seconds() > 300:
+                    return await interaction.followup.send("The previous clear submissions command has expired. Please re-run the command to initiate again.")
+                self.empty_run = datetime.now()
+                self.logger.warning(f"Clear submissions confirmed by {interaction.user} for QOTD #{qotd_num}. Proceeding to clear all submissions.")
+                participant = None
+            
+            if await self.qotd_service.clear_submissions(qotd_num, participant):
+                await interaction.followup.send("Submissions cleared successfully.")
+            else:
+                await interaction.followup.send("Failed to clear submissions. Invalid QOTD number or user has no submissions.")
 
     @group.command(name="score", description="Detailed transcript of score")
     @requires_permission(Permission.EVERYONE)
