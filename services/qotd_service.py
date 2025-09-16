@@ -368,6 +368,38 @@ class QotdService:
                 return embed
             return None
 
+    async def update_submissions(
+        self,
+        user: Union[discord.User, discord.Member],
+        qotd_num: int,
+        submissions: str,
+    ) -> Tuple[bool, str]:
+        """Update the user's submissions for a specific QOTD."""
+        async with self.lock:
+            main_sheet = self.gss["Sheet1"]
+            try:
+                new_submissions = [s.strip() for s in submissions.split(",")]
+                float_submissions = [float(s) for s in new_submissions]
+            except Exception as e:
+                await self.logger.warning(f"Error parsing submissions: {e}", e)
+                return False, ""
+            
+            if (1 <= qotd_num < len(main_sheet.get_data()) and main_sheet[qotd_num, COLUMN["status"]] in ["live", "active"]):
+                qotd_sheet = self.gss[f"qotd {qotd_num}"]
+                data = qotd_sheet.get_data()
+                previous_submissions = "No Submissions"
+                for i, (userid, *submissions) in enumerate(data):
+                    if userid == str(user.id):
+                        data[i] = [str(user.id)] + [new_submissions]
+                        previous_submissions = ", ".join(submissions)
+                        break
+                else:
+                    data.append([str(user.id)] + [new_submissions])
+                qotd_sheet.update_data(data)
+                qotd_sheet.commit()
+                return True, previous_submissions
+            return False, ""
+
     async def _submit(
         self, interaction: discord.Interaction, qotd_num: Optional[int], answer_str: str
     ) -> bool:

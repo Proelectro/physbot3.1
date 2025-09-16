@@ -444,6 +444,20 @@ class Qotd(Cog):
             await interaction.followup.send(embed=embed)
         else:
             await interaction.followup.send("Invalid qotd number please choose an active/ live qotd.")
+            
+            
+    @group.command(name="update_submission", description="Overwrites the submission of a user for a qotd only for curators")
+    @app_commands.describe(submission=", separated values for multiple submissions")
+    @requires_permission(Permission.QOTD_PLANNING)
+    async def update_submission(self, interaction: discord.Interaction, participant: discord.User, num: int, submission: str):
+        await interaction.response.defer()
+        rc, previous_submissions = await self.qotd_service.update_submission(participant, num, submission)
+        if rc:
+            await interaction.followup.send(f"Submission updated successfully for {participant.mention} for QOTD #{num}.\nPrevious submissions: {previous_submissions}\nNew submissions: {submission}")
+            await self.logger.warning(f"Submission of {participant} for QOTD #{num} updated by {interaction.user}")
+        else:
+            await interaction.followup.send(f"Failed to update submission. Invalid QOTD number or submissions are not numeric.")
+            await self.logger.warning(f"Submission update failed for {participant} for QOTD #{num} by {interaction.user}")
     
 
     @group.command(name="score", description="Detailed transcript of score")

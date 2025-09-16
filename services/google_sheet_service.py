@@ -43,6 +43,7 @@ class LocalSheet:
         if self._dirty:
             for attempt in range(3):
                 try:
+                    self.sheet.clear()
                     self.sheet.update(self._data)
                     self._dirty = False
                     break
