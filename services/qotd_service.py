@@ -368,7 +368,7 @@ class QotdService:
                 return embed
             return None
 
-    async def update_submissions(
+    async def update_submission(
         self,
         user: Union[discord.User, discord.Member],
         qotd_num: int,
