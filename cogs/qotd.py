@@ -1,7 +1,5 @@
 from datetime import time, datetime
 import os
-import traceback
-import functools
 from typing import Optional, Union
 
 import discord
@@ -13,119 +11,10 @@ import config
 import utils.utils as utils
 from services.qotd_service import QotdService
 from logger import Logger
-from utils.utils import Permission
+from utils.utils import requires_permission, catch_errors, Permission, PaginatorView
 from help_cmds import cmds_creator, cmds_everyone
 
 Cog = commands.Cog
-
-
-def catch_errors(func):
-    """Decorator for listeners and loops to catch and log exceptions."""
-
-    @functools.wraps(func)
-    async def wrapper(self, *args, **kwargs):
-        try:
-            return await func(self, *args, **kwargs)
-        except Exception as e:
-            await self.logger.error(
-                f"{func.__name__} failed: {traceback.format_exc()}", exc=e
-            )
-
-    return wrapper
-
-
-def valid_permission(
-    level: Permission, user: discord.abc.User, channel: discord.TextChannel
-) -> tuple[bool, str]:
-    if level == Permission.PROELECTRO:
-        ok = user.id == config.proelectro
-        msg = "This command is only for Proelectro"
-    elif level == Permission.QOTD_PLANNING:
-        ok = (
-            channel.id in (config.qotd_botspam, config.qotd_planning)
-            or user.id == config.proelectro
-        )
-        msg = "This command only works in QOTD planning channels i.e. planning and botspam"
-    elif level == Permission.QOTD_CREATOR:
-        if isinstance(user, discord.Member):
-            roles = [r.id for r in user.roles]
-            ok = (
-                (config.qotd_creator in roles)
-                or (channel.id in (config.qotd_botspam, config.qotd_planning))
-                or (user.id == config.proelectro)
-            )
-        else:
-            ok = False
-        msg = "You must have the QOTD-Creator role to run this command"
-    elif level == Permission.DM:
-        ok = isinstance(user, discord.User)
-        msg = "Please try the command in DM"
-    elif level == Permission.EVERYONE:
-        ok, msg = True, ""
-    else:
-        ok, msg = False, "Invalid permission level"
-
-    return ok, msg
-
-
-def requires_permission(level: Permission):
-    """
-    Decorator factory for slash commands:
-     1) checks valid_permission
-     2) reports ephemerally & returns if not allowed
-     3) wraps execution in cooldown+error handling
-    """
-
-    def decorator(func):
-        @functools.wraps(func)
-        async def wrapper(
-            self: "Qotd", interaction: discord.Interaction, *args, **kwargs
-        ):
-            embed = self.logger.embed_command(
-                interaction.user, interaction.channel, func.__name__, **kwargs
-            )
-            ok, err_msg = valid_permission(level, interaction.user, interaction.channel)
-            if not ok:
-                await self.logger.warning(embed=embed)
-                return await interaction.response.send_message(err_msg, ephemeral=True)
-
-            try:
-                await self.logger.info(embed=embed)
-                return await func(self, interaction, *args, **kwargs)
-
-            except CommandOnCooldown as cd:
-                # inform user of cooldown
-                try:
-                    await interaction.response.send_message(str(cd), ephemeral=True)
-                except:
-                    pass
-                # log cooldown
-                await self.logger.info(
-                    f"{func.__name__} on cooldown for {interaction.user}: retry in {cd.retry_after:.1f}s"
-                )
-
-            except Exception as exc:
-                # log unexpected error
-                tb = traceback.format_exc()
-                await self.logger.error(f"{func.__name__} failed: {tb}", exc=exc)
-
-                # send fallback notification
-                try:
-                    if interaction.response.is_done():
-                        await interaction.followup.send(
-                            "An unexpected error occurred.", ephemeral=True
-                        )
-                    else:
-                        await interaction.response.send_message(
-                            "An unexpected error occurred.", ephemeral=True
-                        )
-                except:
-                    pass
-
-        return wrapper
-
-    return decorator
-
 
 class Qotd(Cog):
     group = app_commands.Group(
@@ -191,7 +80,7 @@ class Qotd(Cog):
     ):
         if not isinstance(error, CommandOnCooldown):
             await self.logger.error(
-                f"Command error: {error} in command {interaction.command.name} by {interaction.user}"
+                f"THIS SHOULD NEVER OCCUR: Command error: {error} in command {interaction.command.name} by {interaction.user}"
             )
             admin = await self.bot.fetch_user(config.proelectro)
             await self.logger.log_error.send(
@@ -203,8 +92,8 @@ class Qotd(Cog):
                 ),
             )
         else:
-            await self.logger.info(
-                f"On cooldown for {interaction.user if interaction else 'unknown'}: {error.retry_after:.2f}s"
+            await self.logger.warning(
+                f"THIS SHOULD NEVER OCCUR: On cooldown for {interaction.user if interaction else 'unknown'}: {error.retry_after:.2f}s"
             )
             await interaction.response.send_message(str(error), ephemeral=True)
 
@@ -580,9 +469,14 @@ class Qotd(Cog):
     ):
         await interaction.response.defer()
         solver = solver or interaction.user
-        await interaction.followup.send(
-            embed=await self.qotd_service.get_scores(solver)
-        )
+        embed = await self.qotd_service.get_scores(solver)
+        embeds = [embed]
+        if len(embeds) == 1:
+            await interaction.followup.send(embed=embeds[0])
+        else:
+            view = PaginatorView(embeds, interaction.user)
+            await interaction.followup.send(embed=embeds[0], view=view)
+            view.message = await interaction.original_response()
 
     @group.command(name="faq", description="To answer a faq.")
     @requires_permission(Permission.EVERYONE)
@@ -667,82 +561,6 @@ class FAQView(discord.ui.View):
         self.add_item(FAQDropdown(faq_data))
 
 
-class PaginatorView(discord.ui.View):
-    def __init__(self, pages, user):
-        super().__init__(timeout=60)
-        self.pages = pages
-        self.current_page = 0
-        self.user = user
-        self.update_buttons()
-
-    def update_buttons(self):
-        self.first_page.disabled = self.prev_page.disabled = self.current_page == 0
-        self.last_page.disabled = self.next_page.disabled = (
-            self.current_page == len(self.pages) - 1
-        )
-        self.page_counter.label = f"{self.current_page+1}/{len(self.pages)}"
-
-    @discord.ui.button(emoji="⏮", style=discord.ButtonStyle.blurple)
-    async def first_page(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ):
-        self.current_page = 0
-        self.update_buttons()
-        await interaction.response.edit_message(
-            embed=self.pages[self.current_page], view=self
-        )
-
-    @discord.ui.button(emoji="◀", style=discord.ButtonStyle.blurple)
-    async def prev_page(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ):
-        self.current_page -= 1
-        self.update_buttons()
-        await interaction.response.edit_message(
-            embed=self.pages[self.current_page], view=self
-        )
-
-    @discord.ui.button(label="1/1", style=discord.ButtonStyle.gray, disabled=True)
-    async def page_counter(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ):
-        pass
-
-    @discord.ui.button(emoji="▶", style=discord.ButtonStyle.blurple)
-    async def next_page(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ):
-        self.current_page += 1
-        self.update_buttons()
-        await interaction.response.edit_message(
-            embed=self.pages[self.current_page], view=self
-        )
-
-    @discord.ui.button(emoji="⏭", style=discord.ButtonStyle.blurple)
-    async def last_page(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ):
-        self.current_page = len(self.pages) - 1
-        self.update_buttons()
-        await interaction.response.edit_message(
-            embed=self.pages[self.current_page], view=self
-        )
-
-    async def on_timeout(self):
-        for item in self.children:
-            item.disabled = True
-        try:
-            await self.message.edit(view=self)
-        except discord.NotFound:
-            pass
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user != self.user:
-            await interaction.response.send_message(
-                "❌ This paginator is not for you!", ephemeral=True
-            )
-            return False
-        return True
 
 
 async def setup(bot: commands.Bot):
