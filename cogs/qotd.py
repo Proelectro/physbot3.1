@@ -41,12 +41,19 @@ def valid_permission(
         ok = user.id == config.proelectro
         msg = "This command is only for Proelectro"
     elif level == Permission.QOTD_PLANNING:
-        ok = channel.id in (config.qotd_botspam, config.qotd_planning) or user.id == config.proelectro
+        ok = (
+            channel.id in (config.qotd_botspam, config.qotd_planning)
+            or user.id == config.proelectro
+        )
         msg = "This command only works in QOTD planning channels i.e. planning and botspam"
     elif level == Permission.QOTD_CREATOR:
         if isinstance(user, discord.Member):
             roles = [r.id for r in user.roles]
-            ok = (config.qotd_creator in roles) or (channel.id in (config.qotd_botspam, config.qotd_planning)) or (user.id == config.proelectro)
+            ok = (
+                (config.qotd_creator in roles)
+                or (channel.id in (config.qotd_botspam, config.qotd_planning))
+                or (user.id == config.proelectro)
+            )
         else:
             ok = False
         msg = "You must have the QOTD-Creator role to run this command"
@@ -71,7 +78,9 @@ def requires_permission(level: Permission):
 
     def decorator(func):
         @functools.wraps(func)
-        async def wrapper(self: 'Qotd', interaction: discord.Interaction, *args, **kwargs):
+        async def wrapper(
+            self: "Qotd", interaction: discord.Interaction, *args, **kwargs
+        ):
             embed = self.logger.embed_command(
                 interaction.user, interaction.channel, func.__name__, **kwargs
             )
@@ -325,7 +334,6 @@ class Qotd(Cog):
                 f"Leaderboard update attempted but no live QOTD by {interaction.user}"
             )
 
-
     @group.command(
         name="clear_cache", description="Restricted to the owner only (proelectro)."
     )
@@ -351,7 +359,13 @@ class Qotd(Cog):
 
     @group.command(name="random", description="Fetch a random QOTD.")
     @requires_permission(Permission.EVERYONE)
-    async def random(self, interaction: discord.Interaction, topic: Optional[str] = None, curator: Optional[discord.User] = None, difficulty: Optional[str] = None):
+    async def random(
+        self,
+        interaction: discord.Interaction,
+        topic: Optional[str] = None,
+        curator: Optional[discord.User] = None,
+        difficulty: Optional[str] = None,
+    ):
         await interaction.response.defer(ephemeral=True)
         sc = await self.qotd_service.random(
             interaction.channel, topic, curator, difficulty
@@ -363,10 +377,11 @@ class Qotd(Cog):
         else:
             await interaction.followup.send(
                 "No random QOTD for the given filters is available. Maybe try different filters.",
-                ephemeral=True
+                ephemeral=True,
             )
-            await self.logger.info("Failed to fetch a random QOTD (no available questions)")
-    
+            await self.logger.info(
+                "Failed to fetch a random QOTD (no available questions)"
+            )
 
     @group.command(name="edit", description="Edit a QOTD. Only for curators.")
     @requires_permission(Permission.QOTD_PLANNING)
@@ -383,7 +398,9 @@ class Qotd(Cog):
         tolerance: Optional[str] = None,
     ):
         await interaction.response.defer()
-        if question_links and not all("attachments" in k for k in question_links.splitlines()):
+        if question_links and not all(
+            "attachments" in k for k in question_links.splitlines()
+        ):
             await self.logger.info(
                 f"Invalid image links provided by {interaction.user}"
             )
@@ -418,84 +435,143 @@ class Qotd(Cog):
             )
             await self.logger.warning(f"QOTD #{num} edited by {interaction.user}")
         else:
-            await interaction.followup.send(
-                f"QOTD #{num} not found", ephemeral=True
-            )
+            await interaction.followup.send(f"QOTD #{num} not found", ephemeral=True)
             await self.logger.warning(f"QOTD #{num} edit failed by {interaction.user}")
 
     @group.command(
         name="verify_submission", description="To verify submission of any active qotd"
     )
     @requires_permission(Permission.DM)
-    async def verify_submission(
-        self, interaction: discord.Interaction, num: int):
+    async def verify_submission(self, interaction: discord.Interaction, num: int):
         await interaction.response.defer()
         embed = await self.qotd_service.verify_submissions(interaction.user, num)
         if embed:
             await interaction.followup.send(embed=embed)
         else:
-            await interaction.followup.send("Invalid qotd number please choose an active/ live qotd.")
-            
-    @group.command(name="get_submission", description="Check the submissions of any active qotd of a user")
+            await interaction.followup.send(
+                "Invalid qotd number please choose an active/ live qotd."
+            )
+
+    @group.command(
+        name="get_submission",
+        description="Check the submissions of any active qotd of a user",
+    )
     @requires_permission(Permission.QOTD_PLANNING)
-    async def get_submission(self, interaction: discord.Interaction, participant: discord.User, num: int):
+    async def get_submission(
+        self, interaction: discord.Interaction, participant: discord.User, num: int
+    ):
         await interaction.response.defer()
         embed = await self.qotd_service.verify_submissions(participant, num)
         if embed:
             await interaction.followup.send(embed=embed)
         else:
-            await interaction.followup.send("Invalid qotd number please choose an active/ live qotd.")
-            
-            
-    @group.command(name="update_submission", description="Overwrites the submission of a user for a qotd only for curators")
+            await interaction.followup.send(
+                "Invalid qotd number please choose an active/ live qotd."
+            )
+
+    @group.command(
+        name="update_submission",
+        description="Overwrites the submission of a user for a qotd only for curators",
+    )
     @app_commands.describe(submission=", separated values for multiple submissions")
     @requires_permission(Permission.QOTD_PLANNING)
-    async def update_submission(self, interaction: discord.Interaction, participant: discord.User, num: int, submission: str):
+    async def update_submission(
+        self,
+        interaction: discord.Interaction,
+        participant: discord.User,
+        num: int,
+        submission: str,
+    ):
         await interaction.response.defer()
-        rc, previous_submissions = await self.qotd_service.update_submission(participant, num, submission)
+        rc, previous_submissions = await self.qotd_service.update_submission(
+            participant, num, submission
+        )
         if rc:
-            await interaction.followup.send(f"Submission updated successfully for {participant.mention} for QOTD #{num}.\nPrevious submissions: {previous_submissions}\nNew submissions: {submission}")
-            await self.logger.warning(f"Submission of {participant} for QOTD #{num} updated by {interaction.user}")
+            await interaction.followup.send(
+                f"Submission updated successfully for {participant.mention} for QOTD #{num}.\nPrevious submissions: {previous_submissions}\nNew submissions: {submission}"
+            )
+            await self.logger.warning(
+                f"Submission of {participant} for QOTD #{num} updated by {interaction.user}"
+            )
         else:
-            await interaction.followup.send(f"Failed to update submission. Invalid QOTD number or submissions are not numeric.")
-            await self.logger.warning(f"Submission update failed for {participant} for QOTD #{num} by {interaction.user}")
-    
-    @group.command(name="update_offset", description="Update the offset score for a user. Only for curators")
+            await interaction.followup.send(
+                f"Failed to update submission. Invalid QOTD number or submissions are not numeric."
+            )
+            await self.logger.warning(
+                f"Submission update failed for {participant} for QOTD #{num} by {interaction.user}"
+            )
+
+    @group.command(
+        name="update_offset",
+        description="Update the offset score for a user. Only for curators",
+    )
     @requires_permission(Permission.QOTD_PLANNING)
-    async def update_offset(self, interaction: discord.Interaction, participant: discord.User, offset: str):
+    async def update_offset(
+        self, interaction: discord.Interaction, participant: discord.User, offset: str
+    ):
         await interaction.response.defer()
         try:
             offset_val = float(offset)
         except ValueError:
-            return await interaction.followup.send("Invalid offset value. Please provide a numeric value.")
-        rc, previous_offset = await self.qotd_service.update_offset(participant, offset_val)
+            return await interaction.followup.send(
+                "Invalid offset value. Please provide a numeric value."
+            )
+        rc, previous_offset = await self.qotd_service.update_offset(
+            participant, offset_val
+        )
         if rc:
-            await interaction.followup.send(f"Offset updated successfully for {participant.mention}.\nPrevious offset: {previous_offset}\nNew offset: {offset_val}")
-            await self.logger.warning(f"Offset of {participant} updated by {interaction.user}")
+            await interaction.followup.send(
+                f"Offset updated successfully for {participant.mention}.\nPrevious offset: {previous_offset}\nNew offset: {offset_val}"
+            )
+            await self.logger.warning(
+                f"Offset of {participant} updated by {interaction.user}"
+            )
         else:
-            await interaction.followup.send(f"Failed to update offset. Unknown error occurred Contact Proelectro.")
-            await self.logger.warning(f"Offset update failed for {participant} by {interaction.user}")
-    
-    @group.command(name="clear_submissions", description="Clear all submissions of a qotd. NOTE THIS ACTION IS IRREVERSIBLE. Only for curators")
+            await interaction.followup.send(
+                f"Failed to update offset. Unknown error occurred Contact Proelectro."
+            )
+            await self.logger.warning(
+                f"Offset update failed for {participant} by {interaction.user}"
+            )
+
+    @group.command(
+        name="clear_submissions",
+        description="Clear all submissions of a qotd. NOTE THIS ACTION IS IRREVERSIBLE. Only for curators",
+    )
     @requires_permission(Permission.QOTD_PLANNING)
-    async def clear_submissions(self, interaction: discord.Interaction, qotd_num: int, participant: Optional[discord.User] = None):
+    async def clear_submissions(
+        self,
+        interaction: discord.Interaction,
+        qotd_num: int,
+        participant: Optional[discord.User] = None,
+    ):
         await interaction.response.defer()
         if participant is None:
             self.empty_run = datetime.now()
-            await self.logger.warning(f"Clear submissions initiated by {interaction.user} for QOTD #{qotd_num}. Awaiting confirmation.")
-            await interaction.followup.send(f"THIS ACTION IS IRREVERSIBLE. If you are sure you want to clear submissions of all users for this qotd, please re-run the command with the user as {self.bot.user.mention}.")
+            await self.logger.warning(
+                f"Clear submissions initiated by {interaction.user} for QOTD #{qotd_num}. Awaiting confirmation."
+            )
+            await interaction.followup.send(
+                f"THIS ACTION IS IRREVERSIBLE. If you are sure you want to clear submissions of all users for this qotd, please re-run the command with the user as {self.bot.user.mention}."
+            )
         else:
             if participant.id == self.bot.user.id:
                 if (datetime.now() - self.empty_run).total_seconds() > 300:
-                    return await interaction.followup.send("The previous clear submissions command has expired. Please re-run the command to initiate again.")
+                    return await interaction.followup.send(
+                        "The previous clear submissions command has expired. Please re-run the command to initiate again."
+                    )
                 self.empty_run = datetime.now()
-                await self.logger.warning(f"Clear submissions confirmed by {interaction.user} for QOTD #{qotd_num}. Proceeding to clear all submissions.")
+                await self.logger.warning(
+                    f"Clear submissions confirmed by {interaction.user} for QOTD #{qotd_num}. Proceeding to clear all submissions."
+                )
                 participant = None
-            
+
             if await self.qotd_service.clear_submissions(qotd_num, participant):
                 await interaction.followup.send("Submissions cleared successfully.")
             else:
-                await interaction.followup.send("Failed to clear submissions. Invalid QOTD number or user has no submissions.")
+                await interaction.followup.send(
+                    "Failed to clear submissions. Invalid QOTD number or user has no submissions."
+                )
 
     @group.command(name="score", description="Detailed transcript of score")
     @requires_permission(Permission.EVERYONE)
@@ -504,16 +580,19 @@ class Qotd(Cog):
     ):
         await interaction.response.defer()
         solver = solver or interaction.user
-        await interaction.followup.send(embed=await self.qotd_service.get_scores(solver))
-        
+        await interaction.followup.send(
+            embed=await self.qotd_service.get_scores(solver)
+        )
+
     @group.command(name="faq", description="To answer a faq.")
     @requires_permission(Permission.EVERYONE)
     async def faq(self, interaction: discord.Interaction):
         faq_data = self.qotd_service.get_faq()
         view = FAQView(faq_data)
-        await interaction.response.send_message("Choose a question from the dropdown below:", view=view, ephemeral=True)
+        await interaction.response.send_message(
+            "Choose a question from the dropdown below:", view=view, ephemeral=True
+        )
 
-    
     @group.command(name="end_season", description="Only for proelectro")
     @requires_permission(Permission.PROELECTRO)
     async def end_season(self, interaction: discord.Interaction):
@@ -544,12 +623,14 @@ class Qotd(Cog):
             embed = discord.Embed(
                 title=title,
                 color=discord.Color.blurple(),
-                description="Below are the QOTD commands. Commands executed in DMs are marked accordingly."
+                description="Below are the QOTD commands. Commands executed in DMs are marked accordingly.",
             )
-            chunk = command_list[i:i+per_page]
+            chunk = command_list[i : i + per_page]
             for cmd, desc in chunk:
                 embed.add_field(name=cmd, value=desc or "No description.", inline=False)
-            embed.set_footer(text=f"Page {len(pages)+1}/{((len(command_list)+ per_page - 1)/per_page)} • Use commands responsibly!")
+            embed.set_footer(
+                text=f"Page {len(pages)+1}/{((len(command_list)+ per_page - 1)/per_page)} • Use commands responsibly!"
+            )
             pages.append(embed)
 
         if len(pages) == 1:
@@ -558,6 +639,7 @@ class Qotd(Cog):
         view = PaginatorView(pages, interaction.user)
         await interaction.followup.send(embed=pages[0], view=view, ephemeral=True)
         view.message = await interaction.original_response()
+
 
 class FAQDropdown(discord.ui.Select):
     def __init__(self, faq_data):
@@ -572,15 +654,19 @@ class FAQDropdown(discord.ui.Select):
         selected_label = self.values[0]
         for short, full, answer in self.faq_data:
             if short == selected_label:
-                embed = discord.Embed(title=full, description=answer, color=discord.Color.blue())
+                embed = discord.Embed(
+                    title=full, description=answer, color=discord.Color.blue()
+                )
                 await interaction.response.send_message(embed=embed)
                 break
+
 
 class FAQView(discord.ui.View):
     def __init__(self, faq_data):
         super().__init__()
         self.add_item(FAQDropdown(faq_data))
-        
+
+
 class PaginatorView(discord.ui.View):
     def __init__(self, pages, user):
         super().__init__(timeout=60)
@@ -590,37 +676,57 @@ class PaginatorView(discord.ui.View):
         self.update_buttons()
 
     def update_buttons(self):
-        self.first_page.disabled = self.prev_page.disabled = (self.current_page == 0)
-        self.last_page.disabled = self.next_page.disabled = (self.current_page == len(self.pages) - 1)
+        self.first_page.disabled = self.prev_page.disabled = self.current_page == 0
+        self.last_page.disabled = self.next_page.disabled = (
+            self.current_page == len(self.pages) - 1
+        )
         self.page_counter.label = f"{self.current_page+1}/{len(self.pages)}"
 
     @discord.ui.button(emoji="⏮", style=discord.ButtonStyle.blurple)
-    async def first_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def first_page(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         self.current_page = 0
         self.update_buttons()
-        await interaction.response.edit_message(embed=self.pages[self.current_page], view=self)
+        await interaction.response.edit_message(
+            embed=self.pages[self.current_page], view=self
+        )
 
     @discord.ui.button(emoji="◀", style=discord.ButtonStyle.blurple)
-    async def prev_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def prev_page(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         self.current_page -= 1
         self.update_buttons()
-        await interaction.response.edit_message(embed=self.pages[self.current_page], view=self)
+        await interaction.response.edit_message(
+            embed=self.pages[self.current_page], view=self
+        )
 
     @discord.ui.button(label="1/1", style=discord.ButtonStyle.gray, disabled=True)
-    async def page_counter(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def page_counter(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         pass
 
     @discord.ui.button(emoji="▶", style=discord.ButtonStyle.blurple)
-    async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def next_page(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         self.current_page += 1
         self.update_buttons()
-        await interaction.response.edit_message(embed=self.pages[self.current_page], view=self)
+        await interaction.response.edit_message(
+            embed=self.pages[self.current_page], view=self
+        )
 
     @discord.ui.button(emoji="⏭", style=discord.ButtonStyle.blurple)
-    async def last_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def last_page(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         self.current_page = len(self.pages) - 1
         self.update_buttons()
-        await interaction.response.edit_message(embed=self.pages[self.current_page], view=self)
+        await interaction.response.edit_message(
+            embed=self.pages[self.current_page], view=self
+        )
 
     async def on_timeout(self):
         for item in self.children:
@@ -632,9 +738,12 @@ class PaginatorView(discord.ui.View):
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user != self.user:
-            await interaction.response.send_message("❌ This paginator is not for you!", ephemeral=True)
+            await interaction.response.send_message(
+                "❌ This paginator is not for you!", ephemeral=True
+            )
             return False
         return True
+
 
 async def setup(bot: commands.Bot):
     """Load the QOTD cog."""

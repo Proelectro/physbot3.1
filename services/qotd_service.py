@@ -153,7 +153,6 @@ class QotdService:
                     answer=main_sheet[num, COLUMN["answer"]],
                     tolerance=main_sheet[num, COLUMN["tolerance"]],
                     topic=main_sheet[num, COLUMN["topic"]],
-                    
                 )
                 return embed
 
@@ -383,8 +382,10 @@ class QotdService:
             except Exception as e:
                 await self.logger.warning(f"Error parsing submissions: {e}", e)
                 return False, ""
-            
-            if (1 <= qotd_num < len(main_sheet.get_data()) and main_sheet[qotd_num, COLUMN["status"]] in ["live", "active"]):
+
+            if 1 <= qotd_num < len(main_sheet.get_data()) and main_sheet[
+                qotd_num, COLUMN["status"]
+            ] in ["live", "active"]:
                 qotd_sheet = self.gss[f"qotd {qotd_num}"]
                 data = qotd_sheet.get_data()
                 previous_submissions = "No Submissions"
@@ -434,7 +435,9 @@ class QotdService:
                 or qotd_num >= len(main_sheet.get_data())
                 or main_sheet[qotd_num, COLUMN["status"]] not in ["live", "active"]
             ):
-                await self.logger.warning(f"Invalid QOTD number cmd clear_submissions: {qotd_num}")
+                await self.logger.warning(
+                    f"Invalid QOTD number cmd clear_submissions: {qotd_num}"
+                )
                 return False
             qotd_sheet = self.gss[f"qotd {qotd_num}"]
             data = qotd_sheet.get_data()
@@ -512,9 +515,7 @@ class QotdService:
             )
             if is_correct:
                 action_needed = True
-                qotd_logs = utils.get_text_channel(
-                    self.bot, config.qotd_logs
-                )
+                qotd_logs = utils.get_text_channel(self.bot, config.qotd_logs)
                 await qotd_logs.send(
                     f"{user.mention} Submitted the correct answer yay!!!"
                 )

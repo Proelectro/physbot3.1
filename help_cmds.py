@@ -31,7 +31,7 @@ cmds_everyone = [
     (
         "/qotd random [topic] [curator] [difficulty]",
         "Fetch a random QOTD based on optional filters like topic, curator, or difficulty. If no filters are provided, it returns any random QOTD.",
-    )
+    ),
 ]
 cmds_creator = [
     (
@@ -43,7 +43,7 @@ cmds_creator = [
         "Upload or correct the solution image/ pdf link(s) for an existing QOTD. Use this if the solution is wrong or missing.",
     ),
     (
-        "/qotd pending <num>",
+        "/qotd pending [num]",
         "List QOTD uploads awaiting approval or scheduling. Optionally filter by question number to see details of a specific pending item.",
     ),
     (
@@ -53,5 +53,13 @@ cmds_creator = [
     (
         "/qotd get_submissions <user> <num>",
         "Get the submissions of a specific user for a specific QOTD.",
+    ),
+    (
+        "/qotd update_submission <user> <num> <new_submission(s)>",
+        "Update the submission for a specific user and QOTD with a new answer. New submissions can be a single answer or multiple answers separated by commas. Example: /qotd update_submission @user 5 42,43,44",
+    ),
+    (
+        "/qotd clear_submissions <num> [user]",
+        "Clear all submissions for a specific user and QOTD. Clears all submissions if no user is specified."
     )
 ]
