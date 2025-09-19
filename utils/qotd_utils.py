@@ -129,7 +129,7 @@ def get_statistics_embed(
     embed.set_footer(text=f"Creator: {creator}")
     embed.add_field(name="Base Points", value=f"{base:.3f}")
     embed.add_field(
-        name="Weighted Solves", value=str(weighted_solves), inline=False
+        name="Weighted Solves", value=f"{weighted_solves:.3f}", inline=False
     )
     embed.add_field(
         name="Solves (official)", value=str(solves_official), inline=False

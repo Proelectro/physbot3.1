@@ -516,7 +516,7 @@ class QotdService:
                     self.bot, config.qotd_logs
                 )
                 await qotd_logs.send(
-                    f"{user.mention} has solved QOTD #{qotd_num} !!!"
+                    f"{user.mention} Submitted the correct answer yay!!!"
                 )
                 member = phods.get_member(user.id)
                 if member:
