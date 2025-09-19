@@ -36,14 +36,14 @@ class Logger:
         """Log events to appropriate channels"""
         try:
             if level == Level.ERROR and self.log_error:
-                await self.log_error.send(f"🚨 **ERROR**: {message}")
+                await utils.send_long_message(self.log_error, f"🚨 **ERROR**: {message}")
             elif level == Level.WARNING and self.log_important:
-                await self.log_important.send(f"📢 **IMPORTANT**: {message}", embed=embed)
+                await utils.send_long_message(self.log_important, f"📢 **IMPORTANT**: {message}", embed=embed)
             elif level == Level.INFO and self.log_unimportant:
-                await self.log_unimportant.send(f"ℹ️ **INFO**: {message}", embed=embed)
+                await utils.send_long_message(self.log_unimportant, f"ℹ️ **INFO**: {message}", embed=embed)
         except Exception as e:
             print(f"Failed to log event: {traceback.format_exc()}")
-            # Optionally send to a fallback channel or console
+            await utils.send_long_message(self.log_error, f"Failed to log event check console for details.")
 
     async def info(self, message: str = "", embed=None):
         """Log an informational message"""
@@ -60,7 +60,7 @@ class Logger:
         if exc:
             tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
             full_message = f"{message}\n```py\n{tb}\n```"
-        await self._log_event(Level.INFO, message)
+        await self._log_event(Level.INFO, full_message)
         await self._log_event(Level.ERROR, full_message)
 
     def embed_command(

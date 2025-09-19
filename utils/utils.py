@@ -51,6 +51,16 @@ async def remove_roles(role: discord.Role) -> None:
 
 # general utilities
 
+async def send_long_message(channel: discord.TextChannel, message: str) -> None:
+    """Send a long message to a Discord channel, splitting it into multiple messages if necessary."""
+    max_length = 2000  # Discord's message character limit
+    if len(message) <= max_length:
+        await channel.send(message)
+    else:
+        parts = [message[i:i + max_length] for i in range(0, len(message), max_length)]
+        for part in parts:
+            await channel.send(part)
+
 class Permission(Enum):
     PROELECTRO = 0
     QOTD_PLANNING = 1

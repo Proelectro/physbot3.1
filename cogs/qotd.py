@@ -71,7 +71,7 @@ def requires_permission(level: Permission):
 
     def decorator(func):
         @functools.wraps(func)
-        async def wrapper(self, interaction: discord.Interaction, *args, **kwargs):
+        async def wrapper(self: 'Qotd', interaction: discord.Interaction, *args, **kwargs):
             embed = self.logger.embed_command(
                 interaction.user, interaction.channel, func.__name__, **kwargs
             )
