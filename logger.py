@@ -38,9 +38,9 @@ class Logger:
             if level == Level.ERROR and self.log_error:
                 await utils.send_long_message(self.log_error, f"🚨 **ERROR**: {message}")
             elif level == Level.WARNING and self.log_important:
-                await utils.send_long_message(self.log_important, f"📢 **IMPORTANT**: {message}", embed=embed)
+                await self.log_important.send(f"⚠️ **WARNING**: {message}", embed=embed)
             elif level == Level.INFO and self.log_unimportant:
-                await utils.send_long_message(self.log_unimportant, f"ℹ️ **INFO**: {message}", embed=embed)
+                await self.log_unimportant.send(f"ℹ️ **INFO**: {message}", embed=embed)
         except Exception as e:
             print(f"Failed to log event: {traceback.format_exc()}")
             await utils.send_long_message(self.log_error, f"Failed to log event check console for details.")
