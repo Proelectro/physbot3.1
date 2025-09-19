@@ -169,7 +169,7 @@ class Qotd(Cog):
     # async def before_hourly_task(self):
     #     await self.bot.wait_until_ready()
 
-    @tasks.loop(time=time(16, 30))  # 16:30 UTC = 22:00 IST
+    @tasks.loop(time=time(14, 30))  # 14:30 UTC = 20:00 IST
     @catch_errors
     async def daily_qotd_loop(self):
         await self.logger.info("Starting daily QOTD task")
