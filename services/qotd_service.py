@@ -616,7 +616,7 @@ class QotdService:
         scores: list[tuple[str, float]] = []
         for user, score in self.gss["Leaderboard"].get_data():
             if user == user_id:
-                scores.append(("Offset", float(score)))
+                scores.append(("Point adjustment", float(score)))
         for num in range(1, len(main_sheet.get_data())):
             if main_sheet[num, COLUMN["status"]] in ["active", "live"]:
                 ans = main_sheet[num, COLUMN["answer"]]
