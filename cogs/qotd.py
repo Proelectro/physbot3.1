@@ -482,14 +482,14 @@ class Qotd(Cog):
         await interaction.response.defer()
         if participant is None:
             self.empty_run = datetime.now()
-            self.logger.warning(f"Clear submissions initiated by {interaction.user} for QOTD #{qotd_num}. Awaiting confirmation.")
+            await self.logger.warning(f"Clear submissions initiated by {interaction.user} for QOTD #{qotd_num}. Awaiting confirmation.")
             await interaction.followup.send(f"THIS ACTION IS IRREVERSIBLE. If you are sure you want to clear submissions of all users for this qotd, please re-run the command with the user as {self.bot.user.mention}.")
         else:
             if participant.id == self.bot.user.id:
                 if (datetime.now() - self.empty_run).total_seconds() > 300:
                     return await interaction.followup.send("The previous clear submissions command has expired. Please re-run the command to initiate again.")
                 self.empty_run = datetime.now()
-                self.logger.warning(f"Clear submissions confirmed by {interaction.user} for QOTD #{qotd_num}. Proceeding to clear all submissions.")
+                await self.logger.warning(f"Clear submissions confirmed by {interaction.user} for QOTD #{qotd_num}. Proceeding to clear all submissions.")
                 participant = None
             
             if await self.qotd_service.clear_submissions(qotd_num, participant):
