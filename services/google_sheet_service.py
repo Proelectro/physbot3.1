@@ -1,5 +1,5 @@
 import gspread
-
+import time
 
 class LocalSheet:
     def __init__(self, workbook: gspread.Spreadsheet, sheet_name: str) -> None:
@@ -45,13 +45,14 @@ class LocalSheet:
         if self._dirty:
             for attempt in range(3):
                 try:
-                    self.sheet.clear()
+                    self.sheet.batch_clear(["A1:Z1000"])
                     self.sheet.update(self._data)
                     self._dirty = False
                     break
                 except gspread.exceptions.APIError as e:
                     if attempt == 2:
                         raise e
+                    time.sleep(2 ** attempt)
 
 
 class GoogleSheetService:
