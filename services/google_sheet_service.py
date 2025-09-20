@@ -43,7 +43,7 @@ class LocalSheet:
 
     def commit(self) -> None:
         if self._dirty:
-            for attempt in range(3):
+            for attempt in range(5):
                 try:
                     self.sheet.batch_clear(["A1:Z1000"])
                     self.sheet.update(self._data)
