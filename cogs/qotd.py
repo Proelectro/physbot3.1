@@ -79,9 +79,6 @@ class Qotd(Cog):
         self, interaction: discord.Interaction, error: app_commands.AppCommandError
     ):
         if not isinstance(error, CommandOnCooldown):
-            await self.logger.error(
-                f"THIS SHOULD NEVER OCCUR: Command error: {error} in command {interaction.command.name} by {interaction.user}"
-            )
             admin = await self.bot.fetch_user(config.proelectro)
             await self.logger.log_error.send(
                 admin.mention,

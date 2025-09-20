@@ -43,7 +43,9 @@ class Logger:
                 await self.log_unimportant.send(f"ℹ️ **INFO**: {message}", embed=embed)
         except Exception as e:
             print(f"Failed to log event: {traceback.format_exc()}")
-            await utils.send_long_message(self.log_error, f"Failed to log event check console for details.")
+            await self.log_error.send(f"Failed to log event check console for details.")
+            await self.log_error.send(f"Error message: {str(e)}")
+            await self.log_error.send(f"Original message: {message}")
 
     async def info(self, message: str = "", embed=None):
         """Log an informational message"""

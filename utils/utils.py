@@ -253,6 +253,9 @@ def requires_permission(level: Permission):
                 return await func(self, interaction, *args, **kwargs)
 
             except CommandOnCooldown as cd:
+                await self.logger.warning(
+                    f"THIS SHOULD NEVER HAPPEN: {func.__name__} on cooldown for {interaction.user}: retry in {cd.retry_after:.1f}s"
+                )
                 # inform user of cooldown
                 try:
                     await interaction.response.send_message(str(cd), ephemeral=True)
