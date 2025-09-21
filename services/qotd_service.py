@@ -7,6 +7,7 @@ from discord.ext import commands
 from services.google_sheet_service import GoogleSheetService, LocalSheet
 from logger import Logger
 import random
+from utils.ansi_utils import create_ansi_message, ansi_colorize
 from utils.qotd_utils import (
     COLUMN,
     get_qotd_num_to_post,
@@ -516,9 +517,10 @@ class QotdService:
             if is_correct:
                 action_needed = True
                 qotd_logs = utils.get_text_channel(self.bot, config.qotd_logs)
-                await qotd_logs.send(
-                    f"{user.mention} Submitted the correct answer yay!!!"
-                )
+                msg = f"{user.mention} Submitted the correct answer for QOTD {qotd_num} !!!"
+                color = 'green' if qotd_num % 2 == 0 else 'yellow'
+                ansi_msg = create_ansi_message(ansi_colorize(msg, color=color))
+                await qotd_logs.send(ansi_msg)
                 member = phods.get_member(user.id)
                 if member:
                     role = phods.get_role(config.qotd_solver)
@@ -606,6 +608,11 @@ class QotdService:
             "Placeholder for leaderboard message"
         )
         main_sheet[qotd_num_to_post, COLUMN["leaderboard"]] = str(leaderboard_msg.id)
+
+        # qotd logs
+        qotd_logs = utils.get_text_channel(self.bot, config.qotd_logs)
+        msg = "=" * 10 + f" QOTD {qotd_num_to_post} " + "=" * 10
+        await qotd_logs.send(create_ansi_message(ansi_colorize(msg, color='cyan')))
 
         # final commit
         main_sheet.commit()
