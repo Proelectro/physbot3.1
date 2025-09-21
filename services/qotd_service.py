@@ -519,7 +519,7 @@ class QotdService:
                 qotd_logs = utils.get_text_channel(self.bot, config.qotd_logs)
                 msg = f"Submitted the correct answer for QOTD {qotd_num} !!!"
                 color = 'green' if qotd_num % 2 == 0 else 'yellow'
-                ansi_msg = create_ansi_message(f"{user.mention} ", ansi_colorize(msg, color=color))
+                ansi_msg = f"{user.mention} " + create_ansi_message(ansi_colorize(msg, color=color))
                 await qotd_logs.send(ansi_msg)
                 member = phods.get_member(user.id)
                 if member:
