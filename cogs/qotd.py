@@ -487,10 +487,14 @@ class Qotd(Cog):
     @group.command(name="end_season", description="Only for proelectro")
     @requires_permission(Permission.PROELECTRO)
     async def end_season(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
-        await interaction.followup.send(
-            "This command will be there from bot version 3.2"
-        )
+        await interaction.response.defer()
+        rc = await self.qotd_service.end_season()
+        if rc:
+            await interaction.followup.send("Season ended successfully.", ephemeral=True)
+            await self.logger.warning("Season ended by proelectro")
+        else:
+            await interaction.followup.send("No season to end.", ephemeral=True)
+            await self.logger.warning("Season end attempted but no active season")
 
     @group.command(
         name="help", description="Displays list and description of qotd cmds"
