@@ -644,7 +644,7 @@ class QotdService:
             if self.is_end_season:
                 self.live_qotd = None
                 self.is_end_season = False
-                self._update_leaderboard_stats()
+                await self._update_leaderboard_stats()
                 await self.logger.info("Ending the season")
                 main_sheet = self.gss["Sheet1"]
                 active_and_live = []
@@ -669,6 +669,7 @@ class QotdService:
                 await self.logger.info(
                     f"Ended season with {len(active_and_live)} QOTDs"
                 )
+                return "Season ended successfully."
             else:
                 self.is_end_season = True
                 return "Use the command again to end the season."
