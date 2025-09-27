@@ -642,9 +642,9 @@ class QotdService:
         """End the current season and reset the QOTD data."""
         async with self.lock:
             if self.is_end_season:
+                await self._update_leaderboard_stats()
                 self.live_qotd = None
                 self.is_end_season = False
-                await self._update_leaderboard_stats()
                 await self.logger.info("Ending the season")
                 main_sheet = self.gss["Sheet1"]
                 active_and_live = []
@@ -657,6 +657,8 @@ class QotdService:
                 for num in active_and_live:
                     del self.gss[f"qotd {num}"]
                 await self.logger.info("Deleted all active QOTD sheets")
+                self.gss["Leaderboard"].update_data([])
+                self.gss["Leaderboard"].commit()
                 data_sheet = self.gss["data"]
                 data_sheet[1, 2] = str(int(data_sheet[1, 2]) + 1)
                 data_sheet[1, 3] = "live"
