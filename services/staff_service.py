@@ -34,8 +34,9 @@ class StaffService:
                 
             elif message.channel in self.reverse_monitored_cache:
                 original_channel = self.reverse_monitored_cache[message.channel]
-                msg = await original_channel.send(message.content)
-                self.message_cache[message.id] = msg
+                if message.content and not message.content.startswith("//"):
+                    msg = await original_channel.send(message.content)
+                    self.message_cache[message.id] = msg
         
     async def on_delete_message(self, message: discord.Message) -> None:
         async with self.lock:
@@ -70,8 +71,9 @@ class StaffService:
                 if before.id in self.message_cache:
                     try:
                         msg = self.message_cache[before.id]
-                        await msg.edit(content=after.content)
-                        self.message_cache[after.id] = msg
+                        if after.content and not after.content.startswith("//"):
+                            await msg.edit(content=after.content)
+                            self.message_cache[after.id] = msg
                     except Exception as e:
                         self.logger.error(f"Error editing message in original channel: {e}")
                 else:
