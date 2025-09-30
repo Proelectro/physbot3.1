@@ -2,6 +2,7 @@ cogs = [
     "cogs.qotd",
     "cogs.messages",
     "cogs.miscellaneous",
+    "cogs.staff",
 ]
 log_important = 1019451650504663100
 log_unimportant = 1031869219974946847
@@ -9,7 +10,7 @@ log_error = 1383577607089553508
 prefix = "!"
 dq = 684973100852314279
 proelectro = 722398964053442580
-admin = 846036419054403594
+staff = 846036419054403594
 
 phods = 601528888908185655
 dm_channel = 1019445190420869150
@@ -45,3 +46,6 @@ qotd_logs = 1416447141693493290
 # Deprecated
 voting = 712889974995025983
 helper = 733916324123770881
+
+# Staff monitoring
+category = 1422521062175801454

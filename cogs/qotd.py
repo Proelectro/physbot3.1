@@ -90,7 +90,7 @@ class Qotd(Cog):
             )
         else:
             await self.logger.warning(
-                f"THIS SHOULD NEVER OCCUR: On cooldown for {interaction.user if interaction else 'unknown'}: {error.retry_after:.2f}s"
+                f"COOLDOWN TYPE 1: On cooldown for {interaction.user if interaction else 'unknown'}: {error.retry_after:.2f}s"
             )
             await interaction.response.send_message(str(error), ephemeral=True)
 

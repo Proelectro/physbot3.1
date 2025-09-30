@@ -1,3 +1,4 @@
+from copy import error
 import functools
 import traceback
 import datetime
@@ -121,6 +122,13 @@ def valid_permission(
     if level == Permission.PROELECTRO:
         ok = user.id == config.proelectro
         msg = "This command is only for Proelectro"
+    elif level == Permission.STAFF:
+        if isinstance(user, discord.Member):
+            roles = [r.id for r in user.roles]
+            ok = (config.staff in roles) or (user.id == config.proelectro)
+        else:
+            ok = False
+        msg = "You must have the Staff role to run this command"
     elif level == Permission.QOTD_PLANNING:
         ok = (
             channel.id in (config.qotd_botspam, config.qotd_planning)
@@ -262,6 +270,9 @@ def requires_permission(level: Permission):
                 except:
                     pass
                 # log cooldown
+                await self.logger.warning(
+                    f"COOLDOWN TYPE 2: On cooldown for {interaction.user if interaction else 'unknown'}: {cd.retry_after:.2f}s"
+                )
                 await self.logger.info(
                     f"{func.__name__} on cooldown for {interaction.user}: retry in {cd.retry_after:.1f}s"
                 )

@@ -19,6 +19,7 @@ from utils.qotd_utils import (
     create_scores_embed,
     create_submission_embed,
     get_stats,
+    create_log_embed,
 )
 
 
@@ -57,6 +58,7 @@ class QotdService:
         self.lock: asyncio.Lock = asyncio.Lock()
         self.users: dict[str, str] = {}
         self.is_end_season: bool = False
+        self.solved_cache = set()
 
     def get_faq(self):
         return self.gss["faq"].get_data()
@@ -106,7 +108,6 @@ class QotdService:
     ) -> discord.Embed:
         """Get the pending QOTD or a specific QOTD if num is provided."""
         async with self.lock:
-
             main_sheet = self.gss["Sheet1"]
             if num is None:
                 embed = discord.Embed(
@@ -125,7 +126,6 @@ class QotdService:
                 if (
                     num < 1
                     or num >= len(main_sheet.get_data())
-                    or main_sheet[num, COLUMN["status"]] != "pending"
                 ):
                     await self.logger.warning(f"Invalid QOTD number: {num}")
                     return discord.Embed(
@@ -497,7 +497,7 @@ class QotdService:
         if (
             main_sheet[qotd_num, COLUMN["status"]] == "live"
             and member
-            and not member.get_role(config.admin)
+            and not member.get_role(config.staff)
             and not member.get_role(config.qotd_creator)
         ):
             qotd_sheet = self.gss[f"qotd {qotd_num}"]
@@ -516,11 +516,12 @@ class QotdService:
             )
             if is_correct:
                 action_needed = True
-                qotd_logs = utils.get_text_channel(self.bot, config.qotd_logs)
-                msg = f"Submitted the correct answer for QOTD {qotd_num} !!!"
-                color = ['green', 'yellow', 'blue'][qotd_num % 3]
-                ansi_msg = f"{user.mention} " + create_ansi_message(ansi_colorize(msg, color=color))
-                await qotd_logs.send(ansi_msg)
+                if (user.id, qotd_num) not in self.solved_cache:
+                    qotd_logs = utils.get_text_channel(self.bot, config.qotd_logs)
+                    color = [discord.Color.green(), discord.Color.yellow(), discord.Color.blue()][qotd_num % 3]
+                    embed = create_log_embed(user, qotd_num, color)
+                    await qotd_logs.send(embed=embed)
+                    self.solved_cache.add((user.id, qotd_num))
                 member = phods.get_member(user.id)
                 if member:
                     role = phods.get_role(config.qotd_solver)
@@ -609,10 +610,6 @@ class QotdService:
         )
         main_sheet[qotd_num_to_post, COLUMN["leaderboard"]] = str(leaderboard_msg.id)
 
-        # qotd logs
-        qotd_logs = utils.get_text_channel(self.bot, config.qotd_logs)
-        msg = "=" * 10 + f" QOTD {qotd_num_to_post} " + "=" * 10
-        await qotd_logs.send(create_ansi_message(ansi_colorize(msg, color='cyan')))
 
         # final commit
         main_sheet.commit()

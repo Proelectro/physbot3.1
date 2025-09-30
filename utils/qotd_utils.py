@@ -177,3 +177,14 @@ def get_submit_embed(
     )
     embed.set_footer(text=str(user.id))
     return embed
+
+def create_log_embed(user: Union[discord.User, discord.Member], qotd_num: int, color: discord.Color) -> discord.Embed:
+    embed = discord.Embed(
+        title=f"🎉 QOTD Solver!",
+        description=f"{user.mention} has submitted the correct answer for QOTD {qotd_num}!",
+        color=color,
+        timestamp=datetime.now(timezone.utc),
+    )
+    embed.set_author(name=user.name, icon_url=user.display_avatar.url)
+    embed.set_footer(text=str(user.id))
+    return embed

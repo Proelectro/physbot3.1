@@ -30,7 +30,7 @@ class Miscellaneous(Cog):
     @app_commands.command()
     async def remove_role(self, interaction: discord.Interaction, role: discord.Role):
         await interaction.response.defer()
-        if interaction.user.get_role(config.admin):
+        if interaction.user.get_role(config.staff):
             for member in role.members:
                 await member.remove_roles(role)
         await interaction.followup.send(f"Removed all members from {role}.")

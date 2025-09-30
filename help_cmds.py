@@ -63,3 +63,15 @@ cmds_creator = [
         "Clear all submissions for a specific user and QOTD. Clears all submissions if no user is specified."
     )
 ]
+
+cmds_staff = [
+    (
+        "/staff help",
+        "Shows this help message, listing all available Staff commands you have permission to use.",
+    ),
+    (
+        "/staff monitor [channel] [user]",
+        "Monitor a specific channel to send and receive messages through the bot. If both specified it will monitor DM of the user and channel. If no channel is specified it will list all monitored channels. If already monitoring the channel, it will stop monitoring it.",
+    ),
+]
+        
