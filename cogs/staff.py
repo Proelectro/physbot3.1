@@ -42,7 +42,13 @@ class Staff(Cog):
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
         if before.author.bot:
             return        
-        await self.staff_service.on_message_edit(before, after)    
+        await self.staff_service.on_message_edit(before, after)
+        
+    @Cog.listener()
+    async def on_delete_message(self, message: discord.Message):
+        if message.author.bot:
+            return        
+        await self.staff_service.on_delete_message(message)    
 
     @Cog.listener()
     async def on_app_command_error(
