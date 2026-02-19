@@ -33,8 +33,11 @@ class Miscellaneous(Cog):
         if interaction.user.get_role(config.staff):
             for member in role.members:
                 await member.remove_roles(role)
-        await interaction.followup.send(f"Removed all members from {role}.")
-        return True
+            await interaction.followup.send(f"Removed all members from {role}.")
+            return True
+        else:
+            await interaction.followup.send("You don't have permission to use this command.")
+            return False
 
     @app_commands.command(
         name="attachment_link", description="Converts attachment to link."
