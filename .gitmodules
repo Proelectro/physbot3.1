@@ -1,3 +1,3 @@
 [submodule "potd_images"]
 	path = potd_images
-	url = https://github.com/Proelectro/potd_images.git
+	url = git@github.com:Proelectro/potd_images.git
