@@ -44,7 +44,7 @@ async def post_question(
     num: str,
     date: str,
     day: str,
-    links: str,
+    problem_path: str,
     creator: str,
     pqotd: str,
     source: Optional[str] = None,
@@ -56,20 +56,23 @@ async def post_question(
     announce: bool = False,
 ) -> None:
     """Post a formatted question of the day message to the specified channel."""
-    post = f"**{pqotd} {num}**\n**{date}, {day}**\n{links}"
+    post = f"**{pqotd} {num}**\n**{date}, {day}**"
     post2 = f"{pqotd} Creator: **{creator}**\n"
-    post3 = f"Source: ||{source}||\n" if source is not None else ""
-    post4 = f"Points: {points}\n" if points is not None else ""
-    post5 = f"Difficulty: {difficulty}\n" if difficulty is not None else ""
-    post6 = f"Category: {topic}\n" if topic is not None else ""
+    post3 = f"Source: ||{source}||\n" if source else ""
+    post4 = f"Points: {points}\n" if points else ""
+    post5 = f"Difficulty: {difficulty}\n" if difficulty else ""
+    post6 = f"Category: {topic}\n" if topic else ""
     post7 = f"Answer: {answer} Tolerance: {tolerance}" if answer is not None else ""
 
-    msg1 = await channel.send(post)  # type: ignore
+    msg1 = await channel.send(post, file=discord.File(problem_path))  # type: ignore
     msg2 = await channel.send(post2 + post3 + post4 + post5 + post6 + post7)  # type: ignore
-    if announce:
-        await msg1.publish()
-        await msg2.publish()
-
+    try:
+        if announce:
+            await msg1.publish()
+            await msg2.publish()
+    except Exception as e:
+        # If the channel is not a forum channel, publishing will fail. We can ignore this error.
+        pass
 
 async def remove_roles(role: discord.Role) -> None:
     """Removes a specific role from all members in the guild.

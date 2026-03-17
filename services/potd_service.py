@@ -82,7 +82,7 @@ class PotdService:
                 num=main_sheet[potd_num, COLUMN["potd_num"]],
                 date=main_sheet[potd_num, COLUMN["date"]],
                 day=main_sheet[potd_num, COLUMN["day"]],
-                links=main_sheet[potd_num, COLUMN["problem link"]],
+                problem_path=main_sheet[potd_num, COLUMN["problem path"]],
                 creator=main_sheet[potd_num, COLUMN["creator"]],
                 difficulty=main_sheet[potd_num, COLUMN["difficulty"]],
                 topic=main_sheet[potd_num, COLUMN["topic"]],
@@ -106,7 +106,7 @@ class PotdService:
                     if main_sheet[i, COLUMN["status"]] == "pending":
                         embed.add_field(
                             name=f"POTD {i}",
-                            value=(f"{main_sheet[i, COLUMN['problem link']]}"),
+                            value=(f"{main_sheet[i, COLUMN['problem path']]}"),
                             inline=False,
                         )
                         if len(embed.fields) >= max_pending:
@@ -128,8 +128,8 @@ class PotdService:
                     color=discord.Color.green(),
                 )
                 embed.add_field(
-                    name="problem Link",
-                    value=main_sheet[num, COLUMN["problem link"]],
+                    name="problem path",
+                    value=main_sheet[num, COLUMN["problem path"]],
                     inline=False,
                 )
                 await utils.post_question(
@@ -138,7 +138,7 @@ class PotdService:
                     num=main_sheet[num, COLUMN["potd_num"]],
                     date=main_sheet[num, COLUMN["date"]],
                     day=main_sheet[num, COLUMN["day"]],
-                    links=main_sheet[num, COLUMN["problem link"]],
+                    problem_path=main_sheet[num, COLUMN["problem path"]],
                     creator=main_sheet[num, COLUMN["creator"]],
                     source=main_sheet[num, COLUMN["source"]],
                     difficulty=main_sheet[num, COLUMN["difficulty"]],
@@ -151,7 +151,7 @@ class PotdService:
     async def edit(
         self,
         num: int,
-        problem_links: str,
+        problem_link: str,
         curator: str,
         topic: str,
         points: str,
@@ -164,8 +164,8 @@ class PotdService:
                 await self.logger.warning(f"Invalid POTD number: {num}")
                 return False
 
-            main_sheet[num, COLUMN["problem link"]] = (
-                problem_links or main_sheet[num, COLUMN["problem link"]]
+            main_sheet[num, COLUMN["problem path"]] = (
+                problem_link or main_sheet[num, COLUMN["problem path"]]
             )
             main_sheet[num, COLUMN["creator"]] = (
                 curator or main_sheet[num, COLUMN["creator"]]
@@ -200,22 +200,18 @@ class PotdService:
     async def check(self, channel: utils.ChannelType):
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
-            import aiohttp
-            import os
-            os.makedirs("potd_images", exist_ok=True)
-            async with aiohttp.ClientSession() as session:
-                for num in range(1, 612):
-                    question_link = main_sheet[num, COLUMN["problem link"]]
-                    msg = await channel.send(question_link)
-                    msg = await msg.fetch()
-                    if msg.embeds:
-                        embed = msg.embeds[0]
-                        url = embed.thumbnail.proxy_url
-                        
-                        with open(f"potd_images/potd_{num}.{url.split('.')[-1].split('?')[0]}", "wb") as f:
-                            async with session.get(url) as response:
-                                f.write(await response.read())
-                    await asyncio.sleep(0.1)
+            import os, re
+            for file in os.listdir("potd_images"):
+                match = re.search(r"potd_(\d+)\.", file)
+                if match:
+                    num = int(match.group(1))
+                    main_sheet[num, COLUMN["problem path"]] = f"potd_images/{file}"
+                else:
+                    # Optional: print a warning or skip the file if it doesn't match the pattern
+                    print(f"Skipping file: {file} (No pattern match)")
+            main_sheet.commit()
+            await channel.send("Checked for new POTD images and updated links accordingly.")
+                    
             
 
     async def fetch(
@@ -241,7 +237,7 @@ class PotdService:
                 num=self.gss["Sheet1"][potd_num, COLUMN["potd_num"]],
                 date=self.gss["Sheet1"][potd_num, COLUMN["date"]],
                 day=self.gss["Sheet1"][potd_num, COLUMN["day"]],
-                links=self.gss["Sheet1"][potd_num, COLUMN["problem link"]],
+                problem_path=self.gss["Sheet1"][potd_num, COLUMN["problem path"]],
                 creator=self.gss["Sheet1"][potd_num, COLUMN["creator"]],
                 difficulty=self.gss["Sheet1"][potd_num, COLUMN["difficulty"]],
                 topic=self.gss["Sheet1"][potd_num, COLUMN["topic"]],
@@ -371,7 +367,7 @@ class PotdService:
             num=main_sheet[potd_num_to_post, COLUMN["potd_num"]],
             date=main_sheet[potd_num_to_post, COLUMN["date"]],
             day=main_sheet[potd_num_to_post, COLUMN["day"]],
-            links=main_sheet[potd_num_to_post, COLUMN["problem link"]],
+            problem_path=main_sheet[potd_num_to_post, COLUMN["problem path"]],
             creator=main_sheet[potd_num_to_post, COLUMN["creator"]],
             difficulty=main_sheet[potd_num_to_post, COLUMN["difficulty"]],
             points=main_sheet[potd_num_to_post, COLUMN["points"]],
@@ -386,7 +382,7 @@ class PotdService:
 
         assert self.bot.user
         await problem_of_the_day_channel.send(
-            f"<@&{config.potd_role}> to submit your solution use /potd submit command in my({self.bot.user.mention}) DM."
+            f"<@&{config.potd_role}> to submit your solution use [CURRENTLY NOT FUNCTIONAL BUT SOON IT SHOULD BE] /potd submit command in my({self.bot.user.mention}) DM."
         )
 
         # final commit

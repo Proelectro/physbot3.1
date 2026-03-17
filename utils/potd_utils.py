@@ -13,7 +13,7 @@ COLUMN = {
     "creator": 3,
     "source": 4,
     "points": 5,
-    "problem link": 6,
+    "problem path": 6,
     "topic": 7,
     "difficulty": 8,
     "solution": 9,

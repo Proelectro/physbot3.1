@@ -29,32 +29,6 @@ class Potd(Cog):
         self.potd_service = PotdService(bot)
         self.daily_potd_loop.start()
 
-    # General
-
-    @Cog.listener()
-    @catch_errors
-    async def on_message(self, message: discord.Message):
-        if message.author.bot or isinstance(message.author, discord.Member):
-            return
-        # if "POTD" in message.content.upper():
-        #     await self.logger.info(
-        #         f"POTD mention detected from {message.author} in {message.channel}"
-        #     )
-        #     await message.channel.send(
-        #         "To submit your solution of a POTD type /potd submit and click on the command. As shown below.",
-        #         file=discord.File(os.path.join("images", "submit.png")),
-        #     )
-        #     await message.channel.send(
-        #         "Then type the answer to the problem to submit. As shown below.",
-        #         file=discord.File(os.path.join("images", "potd.png")),
-        #     )
-        #     await message.channel.send(
-        #         "The bot will soon let you know if your answer is correct or incorrect, as shown below.",
-        #         file=discord.File(os.path.join("images", "verdict.png")),
-        #     )
-
-
-
     @tasks.loop(time=time(16, 51))  # 16:51 UTC = 22:21 IST
     @catch_errors
     async def daily_potd_loop(self):
@@ -88,6 +62,7 @@ class Potd(Cog):
     @requires_permission(Permission.EVERYONE)
     async def fetch(self, interaction: discord.Interaction, num: int):
         await interaction.response.defer(ephemeral=True)
+        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         sc = await self.potd_service.fetch(interaction.channel, num)
         if sc:
             await interaction.followup.send(
@@ -107,6 +82,7 @@ class Potd(Cog):
     @requires_permission(Permission.EVERYONE)
     async def solution(self, interaction: discord.Interaction, num: int):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         result = await self.potd_service.solution(num)
         await interaction.followup.send(result)
 
@@ -118,6 +94,7 @@ class Potd(Cog):
         self, interaction: discord.Interaction, num: int, link: str
     ):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         result = await self.potd_service.solution(num, link)
         await interaction.followup.send(result)
 
@@ -131,6 +108,7 @@ class Potd(Cog):
         self, interaction: discord.Interaction, solution: discord.Attachment, num: Optional[int] = None
     ):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         await self.potd_service.submit(interaction, num, solution)
 
     @group.command(name="upload", description="Upload a new POTD. Only for curators.")
@@ -150,7 +128,7 @@ class Potd(Cog):
         points: str = "",
     ):
         await interaction.response.defer(ephemeral=True)
-
+        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         if not all("attachments" in k for k in problem_links.splitlines()):
             await self.logger.info(
                 f"Invalid image links provided by {interaction.user}"
@@ -196,6 +174,7 @@ class Potd(Cog):
         self, interaction: discord.Interaction, num: Optional[int] = None
     ):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         embed = await self.potd_service.pending(interaction.channel, num)
         await interaction.followup.send(embed=embed)
 
@@ -209,6 +188,7 @@ class Potd(Cog):
         difficulty: Optional[str] = None,
     ):
         await interaction.response.defer(ephemeral=True)
+        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         sc = await self.potd_service.random(
             interaction.channel, topic, curator, difficulty
         )
@@ -239,6 +219,7 @@ class Potd(Cog):
         points: Optional[str] = None,
     ):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         if problem_links and not all(
             "attachments" in k for k in problem_links.splitlines()
         ):
@@ -275,6 +256,7 @@ class Potd(Cog):
     @requires_permission(Permission.EVERYONE)
     async def help(self, interaction: discord.Interaction):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         user = interaction.user
 
         roles = [r.id for r in user.roles] if isinstance(user, discord.Member) else []
