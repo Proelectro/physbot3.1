@@ -12,7 +12,7 @@ import utils.utils as utils
 from services.staff_service import StaffService
 from logger import Logger
 from utils.utils import requires_permission, catch_errors, Permission, PaginatorView
-from help_cmds import cmds_creator, cmds_everyone, cmds_staff
+from help_cmds import cmds_staff
 
 Cog = commands.Cog
 

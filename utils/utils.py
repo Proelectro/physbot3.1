@@ -46,6 +46,7 @@ async def post_question(
     day: str,
     links: str,
     creator: str,
+    pqotd: str,
     source: Optional[str] = None,
     points: Optional[int] = None,
     difficulty: Optional[str] = None,
@@ -55,8 +56,8 @@ async def post_question(
     announce: bool = False,
 ) -> None:
     """Post a formatted question of the day message to the specified channel."""
-    post = f"**QOTD {num}**\n**{date}, {day}**\n{links}"
-    post2 = f"QOTD Creator: **{creator}**\n"
+    post = f"**{pqotd} {num}**\n**{date}, {day}**\n{links}"
+    post2 = f"{pqotd} Creator: **{creator}**\n"
     post3 = f"Source: ||{source}||\n" if source is not None else ""
     post4 = f"Points: {points}\n" if points is not None else ""
     post5 = f"Difficulty: {difficulty}\n" if difficulty is not None else ""
@@ -86,8 +87,10 @@ class Permission(enum.Enum):
     STAFF = 1
     QOTD_PLANNING = 2
     QOTD_CREATOR = 3
-    DM = 4
-    EVERYONE = 5
+    POTD_PLANNING = 4
+    POTD_CREATOR = 5
+    DM = 6
+    EVERYONE = 7
 
 async def send_long_message(channel: discord.TextChannel, message: str) -> None:
     """Send a long message to a Discord channel, splitting it into multiple messages if necessary."""
@@ -146,6 +149,23 @@ def valid_permission(
         else:
             ok = False
         msg = "You must have the QOTD-Creator role to run this command"
+    elif level == Permission.POTD_CREATOR:
+        if isinstance(user, discord.Member):
+            roles = [r.id for r in user.roles]
+            ok = (
+                (config.potd_creator in roles)
+                or (channel.id in (config.potd_botspam, config.potd_planning))
+                or (user.id == config.proelectro)
+            )
+        else:
+            ok = False
+        msg = "You must have the POTD-Creator role to run this command"
+    elif level == Permission.POTD_PLANNING:
+        ok = (
+            channel.id in (config.potd_botspam, config.potd_planning)
+            or user.id == config.proelectro
+        )
+        msg = "This command only works in POTD planning channels i.e. planning and botspam"
     elif level == Permission.DM:
         ok = isinstance(user, discord.User)
         msg = "Please try the command in DM"

@@ -1,5 +1,5 @@
 cogs = [
-    "cogs.qotd",
+    "cogs.potd",
     "cogs.messages",
     "cogs.miscellaneous",
     "cogs.staff",
@@ -10,18 +10,17 @@ log_error = 1383577607089553508
 prefix = "!"
 dq = 684973100852314279
 proelectro = 722398964053442580
-staff = 846036419054403594
+staff = 1478801873720053884
 
-phods = 601528888908185655
+phods = 1477813246051356842
 dm_channel = 1019445190420869150
 
 # POTD Channels and roles
-problem_of_the_day = 604504344217518095
-potd_planning = 693285816000315402
-potd_creator = 629453901501956121
-potd_botspam = 916693951359115274
-potd_role = 604639567378644992
-potd_toggle = 1031813175978508338
+problem_of_the_day = 1480086150948589709
+potd_planning = 1480086357383712800
+potd_creator = 1480088113089872058
+potd_botspam = 1480086836897644615
+potd_role = 1480088250570903665
 
 
 # Colors
@@ -43,9 +42,5 @@ qotd_toggle = 1031814291839520788
 qotd_discussion = 869048153721167892
 qotd_logs = 1416447141693493290
 
-# Deprecated
-voting = 712889974995025983
-helper = 733916324123770881
-
 # Staff monitoring
-category = 1422521062175801454
+category = 1480088520726024232

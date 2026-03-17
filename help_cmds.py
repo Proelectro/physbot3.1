@@ -1,5 +1,5 @@
 # Command definitions with detailed descriptions
-cmds_everyone = [
+qotd_cmds_everyone = [
     (
         "/qotd fetch <num>",
         "Retrieves a past Question of the Day by its number. Useful for reviewing old questions or discussion archives.",
@@ -33,7 +33,7 @@ cmds_everyone = [
         "Fetch a random QOTD based on optional filters like topic, curator, or difficulty. If no filters are provided, it returns any random QOTD.",
     ),
 ]
-cmds_creator = [
+qotd_cmds_creator = [
     (
         "/qotd upload <links> <topic> <answer> <difficulty> [tolerance] [source] [points]",
         "Add a new QOTD to the planning queue. Provide one or more image URLs, the topic, the correct numeric answer, difficulty (e.g., easy/medium/hard), optional tolerance percentage, source reference, and legacy points field.",
@@ -62,6 +62,48 @@ cmds_creator = [
         "/qotd clear_submissions <num> [user]",
         "Clear all submissions for a specific user and QOTD. Clears all submissions if no user is specified."
     )
+]
+
+potd_cmds_everyone = [
+    (
+        "/potd fetch <num>",
+        "Retrieves a past Problem of the Day by its number. Useful for reviewing old questions or discussion archives.",
+    ),
+    (
+        "/potd solution <num>",
+        "Displays the official solution and accepted answer for a specific POTD. Great for checking the correct approach or explanation.",
+    ),
+    (
+        "/potd submit <solution> [num]",
+        "Submit your solution to the current or specified POTD via DM. If no number is given, your solution will apply to the live problem. Cooldown: 30s.",
+    ),
+    (
+        "/potd help",
+        "Shows this help message, listing all available POTD commands you have permission to use.",
+    ),
+    (
+        "/potd faq [num]",
+        "For experianced user to give a quick reply to common questions.",
+    ),
+    (
+        "/potd random [topic] [curator] [difficulty]",
+        "Fetch a random POTD based on optional filters like topic, curator, or difficulty. If no filters are provided, it returns any random POTD.",
+    ),
+]
+
+potd_cmds_creator = [
+    (
+        "/potd upload <links> <topic> <answer> <difficulty> [tolerance] [source] [points]",
+        "Add a new POTD to the planning queue. Provide one or more image URLs, the topic, the correct numeric answer, difficulty (e.g., easy/medium/hard), optional tolerance percentage, source reference, and legacy points field.",
+    ),
+    (
+        "/potd update_solution <num> <link>",
+        "Upload or correct the solution image/ pdf link(s) for an existing POTD. Use this if the solution is wrong or missing.",
+    ),
+    (
+        "/potd pending [num]",
+        "List POTD uploads awaiting approval or scheduling. Optionally filter by question number to see details of a specific pending item.",
+    ),
 ]
 
 cmds_staff = [

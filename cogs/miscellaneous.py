@@ -13,20 +13,6 @@ class Miscellaneous(Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @Cog.listener()
-    async def on_message(self, message: discord.Message):
-        if message.channel.id == config.voting:
-            await message.add_reaction("\U0001f44d")
-            await message.add_reaction("🤷‍♂️")
-            await message.add_reaction("\U0001f44e")
-
-    @Cog.listener()
-    async def on_message_edit(self, before, message: discord.Message):
-        if message.channel.id == config.voting:
-            await message.add_reaction("\U0001f44d")
-            await message.add_reaction("🤷‍♂️")
-            await message.add_reaction("\U0001f44e")
-
     @app_commands.command()
     async def remove_role(self, interaction: discord.Interaction, role: discord.Role):
         await interaction.response.defer()
