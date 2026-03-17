@@ -70,9 +70,17 @@ class GoogleSheetService:
 
     def __getitem__(self, sheet_name) -> LocalSheet:
         if sheet_name not in self.sheets:
-            self.sheets[sheet_name] = LocalSheet(self.workbook, sheet_name)
+            max_retries = 3        
+            for attempt in range(max_retries):
+                try:
+                    self.sheets[sheet_name] = LocalSheet(self.workbook, sheet_name)
+                    break                    
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        raise e                         
+                    time.sleep(2)
         return self.sheets[sheet_name]
-
+    
     def __delitem__(self, sheet_name: str) -> None:
         try:
             if sheet_name in self.sheets:

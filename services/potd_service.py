@@ -392,7 +392,7 @@ class PotdService:
 
         assert self.bot.user
         await problem_of_the_day_channel.send(
-            f"<@&{config.potd_role}> to submit your solution use [CURRENTLY NOT FUNCTIONAL BUT SOON IT SHOULD BE] /potd submit command in my({self.bot.user.mention}) DM."
+            f"<@&{config.potd_role}> to submit your solution use  /potd submit command in my({self.bot.user.mention}) DM."
         )
 
         # final commit

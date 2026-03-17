@@ -62,7 +62,15 @@ class Logger:
         if exc:
             tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
             full_message = f"{message}\n```py\n{tb}\n```"
-        await self._log_event(Level.INFO, full_message)
+        
+        # DISCORD LIMIT FIX: Safely truncate if it exceeds ~3900 characters
+        if len(full_message) > 3900:
+            # Slice the string and append the closing markdown ticks
+            full_message = full_message[:3900] + "\n...[Traceback truncated]...\n```"
+
+        # NOTE: You are currently logging this error as BOTH Info and Error.
+        # You might want to remove the Level.INFO line if that was an accident!
+        await self._log_event(Level.INFO, full_message) 
         await self._log_event(Level.ERROR, full_message)
 
     def embed_command(
