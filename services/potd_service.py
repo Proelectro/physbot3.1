@@ -277,15 +277,12 @@ class PotdService:
                     return "Solution not available yet"
 
     async def submit(
-        self, interaction: discord.Interaction, potd_num: Optional[int], answer: str
+        self, interaction: discord.Interaction, potd_num: Optional[int], solution: discord.Attachment
     ) -> None:
         """Submit an answer for the POTD."""
         async with self.lock:
-            # action_needed = await self._submit(interaction, potd_num, answer)
-            await interaction.response.send_message(
-                "This command is currently disabled as we are working on improving the submission system. Please stay tuned for updates!",
-                ephemeral=True
-            )
+            return await self._submit(interaction, potd_num, solution)
+            
 
     async def upload(
         self,
@@ -334,10 +331,23 @@ class PotdService:
 
     
     async def _submit(
-        self, interaction: discord.Interaction, potd_num: Optional[int], answer_str: str
+        self, interaction: discord.Interaction, potd_num: Optional[int], solution: discord.Attachment
     ) -> bool:
-        raise NotImplementedError("Submission system is being revamped, this function is disabled.")
-        
+        if potd_num is None:
+            potd_num = self._get_live_potd_num()
+            if potd_num is None:
+                await self.logger.warning("No live POTD to submit solution for")
+                return False, "There is no live POTD to submit a solution for."
+        main_sheet = self.gss["Sheet1"]
+        if potd_num < 1 or potd_num >= len(main_sheet.get_data()) or main_sheet[potd_num, COLUMN["status"]] == "pending":
+            await self.logger.warning(f"Invalid POTD number: {potd_num}")
+            return False, "Invalid POTD number."
+        potd_botspam_channel = self.bot.get_channel(config.potd_botspam)
+        await potd_botspam_channel.send(
+            f"New solution submitted for POTD {potd_num} by {interaction.user.mention}.", file=await solution.to_file()
+        )
+        return True, "Solution submitted successfully."
+ 
     async def _daily_problem(self) -> None:
         main_sheet = self.gss["Sheet1"]
         potd_num_to_post = get_potd_num_to_post(main_sheet)

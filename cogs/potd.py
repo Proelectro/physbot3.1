@@ -108,8 +108,17 @@ class Potd(Cog):
         self, interaction: discord.Interaction, solution: discord.Attachment, num: Optional[int] = None
     ):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
-        await self.potd_service.submit(interaction, num, solution)
+        sc, msg = await self.potd_service.submit(interaction, num, solution)
+        if sc:
+            await interaction.followup.send(msg or "Successfully submitted your answer for the POTD. The staff will review it and get back to you soon!")
+        else:
+            await interaction.followup.send(
+                msg or "Failed to submit your answer. Please try again later or contact the staff if the issue persists."
+            )
+            await self.logger.warning(
+                f"Failed to submit POTD answer for {interaction.user}"
+            )
+            
 
     @group.command(name="upload", description="Upload a new POTD. Only for curators.")
     @app_commands.describe(
