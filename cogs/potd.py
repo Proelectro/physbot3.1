@@ -29,7 +29,7 @@ class Potd(Cog):
         self.potd_service = PotdService(bot)
         self.daily_potd_loop.start()
 
-    @tasks.loop(time=time(16, 51))  # 16:51 UTC = 22:21 IST
+    @tasks.loop(time=time(14, 30))  # 14:30 UTC = 20:00 IST
     @catch_errors
     async def daily_potd_loop(self):
         await self.logger.info("Starting daily POTD task")
