@@ -145,9 +145,6 @@ class Potd(Cog):
             
 
     @group.command(name="upload", description="Upload a new POTD. Only for curators.")
-    @app_commands.describe(
-        problem_links="Image attachment links. Use newlines for multiple links.",
-    )
     @requires_permission(Permission.POTD_PLANNING)
     async def upload(
         self,
