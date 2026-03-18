@@ -1,17 +1,19 @@
 from copy import error
 import functools
+import random
 import traceback
 import datetime
 import enum
 import time
 from typing import Optional, Union
+import subprocess
 
 import discord
 from discord.ext import commands
 from discord.app_commands import CommandOnCooldown
 
 import config
-
+from logger import Logger
 
 ChannelType = Union[
     discord.VoiceChannel,
@@ -343,3 +345,37 @@ def get_time() -> str:
 def get_text_channel(bot: commands.Bot, channel_id: int) -> discord.TextChannel:
     channel = bot.get_channel(channel_id)
     return channel  # type: ignore
+
+async def upload_potd_image(cwd: str, num: int, problem: discord.Attachment, logger: Logger) -> str:
+    subprocess.run(["git", "checkout", "main"], cwd=cwd, check=True)
+    pull_result = subprocess.run(["git", "pull"], cwd=cwd, check=True, capture_output=True, text=True)
+    # check for merge conflicts
+    if "CONFLICT" in pull_result.stdout or "CONFLICT" in pull_result.stderr:
+        logger.error("Merge conflict detected during git pull")
+        raise Exception("Merge conflict detected. Please resolve manually.")
+    if pull_result.returncode != 0:
+        logger.error(f"Git pull failed: {pull_result.stderr}")
+        raise Exception("Failed to pull latest changes from GitHub.")
+    
+    image_path = f"potd_images/potd_{num}_{problem.filename}_{random.randint(100, 999)}"
+    await problem.save(image_path)
+    
+    subprocess.run(["git", "add", "."], cwd=cwd, check=True)
+    
+    commit_result = subprocess.run(
+        ["git", "commit", "-m", f"Added image for POTD {num}"], 
+        cwd=cwd, 
+        capture_output=True, 
+        text=True
+    )
+    logger.info(f"Git commit output: {commit_result.stdout}")
+    if commit_result.returncode != 0:
+        logger.error(f"Git commit failed: {commit_result.stderr}")
+        raise Exception("Failed to commit changes to GitHub.")
+    
+    subprocess.run(["git", "push"], cwd=cwd, check=True)
+    logger.info("Image successfully pushed to GitHub!")
+    
+    
+    return image_path
+

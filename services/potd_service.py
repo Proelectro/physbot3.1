@@ -1,3 +1,4 @@
+import os
 import config
 import utils.utils as utils
 import asyncio
@@ -103,7 +104,7 @@ class PotdService:
                 await self.logger.warning(f"Invalid POTD number, for add_score: {num}")
                 return False
             score_sheet = self.gss[f"potd_{num}"]
-            for row in range(1, len(score_sheet)):
+            for row in range(len(score_sheet)):
                 if score_sheet[row, 0] == user_id:
                     current_score = int(score_sheet[row, 1])
                     score_sheet[row, 1] = str(current_score + points)
@@ -229,7 +230,7 @@ class PotdService:
     async def edit(
         self,
         num: int,
-        problem_link: str,
+        problem: discord.Attachment,
         curator: str,
         topic: str,
         points: str,
@@ -242,9 +243,11 @@ class PotdService:
                 await self.logger.warning(f"Invalid POTD number: {num}")
                 return False
 
-            main_sheet[num, COLUMN["problem path"]] = (
-                problem_link or main_sheet[num, COLUMN["problem path"]]
-            )
+            if problem:
+                image_path = await utils.upload_potd_image("potd_images", num, problem, self.logger)
+                main_sheet[num, COLUMN["problem path"]] = image_path
+            else:
+                main_sheet[num, COLUMN["problem path"]] = main_sheet[num, COLUMN["problem path"]]
             main_sheet[num, COLUMN["creator"]] = (
                 curator or main_sheet[num, COLUMN["creator"]]
             )
@@ -443,7 +446,7 @@ class PotdService:
         # Complete the previous POTD if it is still live
         if main_sheet[potd_num_to_post - 1, COLUMN["status"]] == "live":
             await self.logger.info(f"Completing previous POTD {potd_num_to_post-1}")
-            main_sheet[potd_num_to_post - 1, COLUMN["status"]] = "done"
+            main_sheet[potd_num_to_post - 1, COLUMN["status"]] = "active"
 
         await self.logger.info(f"Setting POTD {potd_num_to_post} status to live")
         main_sheet[potd_num_to_post, COLUMN["status"]] = "live"

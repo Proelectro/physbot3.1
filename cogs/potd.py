@@ -61,7 +61,7 @@ class Potd(Cog):
     @group.command(name="fetch", description="Fetch a POTD by number.")
     @requires_permission(Permission.EVERYONE)
     async def fetch(self, interaction: discord.Interaction, num: int):
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
         return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         sc = await self.potd_service.fetch(interaction.channel, num)
         if sc:
@@ -89,7 +89,7 @@ class Potd(Cog):
     @group.command(name="add_score", description="To add score for particular problem")
     @requires_permission(Permission.POTD_CREATOR)
     async def add_score(self, interaction: discord.Interaction, num: int, solver: discord.User, points: int, user_id: Optional[int] = None):
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
         sc = await self.potd_service.add_score(num, solver, points, user_id)
         if sc:
             await interaction.followup.send("Successfully added score for the problem of the day.")
@@ -100,7 +100,7 @@ class Potd(Cog):
     @group.command(name="update_leaderboard", description="To update the leaderboard of a particular potd.")
     @requires_permission(Permission.POTD_CREATOR)
     async def update_leaderboard(self, interaction: discord.Interaction, num: int):
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
         sc = await self.potd_service.update_leaderboard(num)
         if sc:
             await interaction.followup.send("Successfully updated the leaderboard for the problem of the day.")
@@ -219,7 +219,7 @@ class Potd(Cog):
         curator: Optional[discord.User] = None,
         difficulty: Optional[str] = None,
     ):
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
         return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         sc = await self.potd_service.random(
             interaction.channel, topic, curator, difficulty
@@ -244,28 +244,16 @@ class Potd(Cog):
         interaction: discord.Interaction,
         num: int,
         curator: Optional[discord.User] = None,
-        problem_links: Optional[str] = None,
+        problem: Optional[discord.Attachment] = None,
         topic: Optional[str] = None,
         difficulty: Optional[str] = None,
         source: Optional[str] = None,
         points: Optional[str] = None,
     ):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
-        if problem_links and not all(
-            "attachments" in k for k in problem_links.splitlines()
-        ):
-            await self.logger.info(
-                f"Invalid image links provided by {interaction.user}"
-            )
-            return await interaction.followup.send(
-                "Please provide a valid image attachment link. On mobile: use the 'Share' option; on desktop: open the image in a new tab and copy the URL.",
-                ephemeral=True,
-            )
-
         rc = await self.potd_service.edit(
             num=num,
-            problem_links=problem_links,
+            problem=problem,
             curator=curator,
             topic=topic,
             points=points,
