@@ -18,7 +18,7 @@ COLUMN = {
     "difficulty": 8,
     "solution": 9,
     "status": 10,
-    "id": 11,
+    "leaderboard": 11,
 }
 
 

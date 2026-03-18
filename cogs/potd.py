@@ -86,6 +86,30 @@ class Potd(Cog):
         result = await self.potd_service.solution(num)
         await interaction.followup.send(result)
 
+    @group.command(name="add_score", description="To add score for particular problem")
+    @requires_permission(Permission.POTD_CREATOR)
+    async def add_score(self, interaction: discord.Interaction, num: int, solver: discord.User, points: int, user_id: Optional[int] = None):
+        await interaction.response.defer(ephemeral=True)
+        sc = await self.potd_service.add_score(num, solver, points, user_id)
+        if sc:
+            await interaction.followup.send("Successfully added score for the problem of the day.")
+        else:
+            await interaction.followup.send("Failed to add score. Please try again later or contact Proelectro if the issue persists.")
+            await self.logger.warning(f"Failed to add score for POTD by {interaction.user}")
+    
+    @group.command(name="update_leaderboard", description="To update the leaderboard of a particular potd.")
+    @requires_permission(Permission.POTD_CREATOR)
+    async def update_leaderboard(self, interaction: discord.Interaction, num: int):
+        await interaction.response.defer(ephemeral=True)
+        sc = await self.potd_service.update_leaderboard(num)
+        if sc:
+            await interaction.followup.send("Successfully updated the leaderboard for the problem of the day.")
+        else:
+            await interaction.followup.send("Failed to update the leaderboard. Please try again later or contact Proelectro if the issue persists.")
+            await self.logger.warning(f"Failed to update leaderboard for POTD by {interaction.user}")
+    
+
+
     @group.command(
         name="update_solution", description="Update the solution for a specific POTD."
     )

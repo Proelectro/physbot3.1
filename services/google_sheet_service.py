@@ -11,8 +11,11 @@ class LocalSheet:
 
     def __getitem__(self, cell_index: tuple[int, int]) -> str:
         row, col = cell_index
-        return self._data[row][col]
-
+        try:
+            return self._data[row][col]
+        except IndexError:
+            return ""
+        
     def __setitem__(self, cell_index: tuple[int, int], value: str) -> None:
         row, col = cell_index
         while len(self._data[row]) <= col:
@@ -54,6 +57,8 @@ class LocalSheet:
                         raise e
                     time.sleep(2 ** attempt)
 
+    def __len__(self):
+        return len(self._data)
 
 class GoogleSheetService:
     def __init__(self, workbook_name: str) -> None:

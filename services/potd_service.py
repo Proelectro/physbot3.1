@@ -2,6 +2,7 @@ import config
 import utils.utils as utils
 import asyncio
 import discord
+from collections import defaultdict
 from typing import Union, Optional, Tuple, Any
 from discord.ext import commands
 from services.google_sheet_service import GoogleSheetService, LocalSheet
@@ -47,6 +48,7 @@ class PotdService:
         self.bot: commands.Bot = bot
         self.live_potd: Optional[int] = None
         self.lock: asyncio.Lock = asyncio.Lock()
+        self.user_cache: dict[str, str] = {}  # Cache for user ID to username mapping
 
     async def random(
         self,
@@ -59,7 +61,7 @@ class PotdService:
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
             valid_potds = []
-            for num in range(1, len(main_sheet.get_data())):
+            for num in range(1, len(main_sheet)):
                 if main_sheet[num, COLUMN["status"]] == "done":
                     if (
                         (topic is None or main_sheet[num, COLUMN["topic"]] == topic)
@@ -90,6 +92,84 @@ class PotdService:
             )
             return True
 
+    async def add_score(
+        self, num: int,  user: discord.Member, points: int, user_id: Optional[int] = None
+    ) -> bool:
+        """Add score to a user for solving the POTD."""
+        async with self.lock:
+            main_sheet = self.gss["Sheet1"]
+            user_id = str(user_id or user.id)
+            if num < 1 or num >= len(main_sheet) or main_sheet[num, COLUMN["status"]] not in ["live", "active"]:
+                await self.logger.warning(f"Invalid POTD number, for add_score: {num}")
+                return False
+            score_sheet = self.gss[f"potd_{num}"]
+            for row in range(1, len(score_sheet)):
+                if score_sheet[row, 0] == user_id:
+                    current_score = int(score_sheet[row, 1])
+                    score_sheet[row, 1] = str(current_score + points)
+                    score_sheet.commit()
+                    return True
+            # If user not found, add a new entry
+            score_sheet.append_row([user_id, str(points)])
+            score_sheet.commit()
+            return True
+        
+    async def update_leaderboard(self, num: int) -> bool:
+        """Update the leaderboard for a specific POTD."""
+        async with self.lock:
+            return await self._update_leaderboard(num)
+            
+    async def _update_leaderboard(self, num: int) -> bool:
+        main_sheet = self.gss["Sheet1"]
+        if num < 1 or num >= len(main_sheet) or main_sheet[num, COLUMN["status"]] not in ["active", "live"]:
+            await self.logger.warning(f"Invalid POTD number, for update_leaderboard: {num}")
+            return False
+        scores = defaultdict(int)
+        for num in range(1, len(main_sheet)):
+            if main_sheet[num, COLUMN["status"]] in ["live", "active"]:
+                score_sheet = self.gss[f"potd_{num}"]
+                for row in range(len(score_sheet)):
+                    user_id = score_sheet[row, 0]
+                    points = int(score_sheet[row, 1])
+                    scores[user_id] += points
+        message = self.gss["data"][1, 0]
+        season = self.gss["data"][1, 1]
+        message = message.format(
+            potd=num,
+            season=season,
+        )
+        # self.logger.debug(f"Updating leaderboard for POTD {num} with scores: {scores}")
+        for rank, (userid, point) in enumerate(
+            sorted(scores.items(), key=lambda x: float(x[1]), reverse=True)[:30],
+            start=1,
+        ):
+            rank_dot = f"{rank}."
+            username = await self._get_user_name_or_id(userid)
+            message += f"\n{rank_dot:4} {username[:29]:29} {float(point):.3f}"
+        message += "\n```"
+        
+        leaderboard_channel = self.bot.get_channel(config.potd_leaderboard)
+        if main_sheet[num, COLUMN["leaderboard"]].strip():
+            msg = await leaderboard_channel.fetch_message(int(main_sheet[num, COLUMN["leaderboard"]]))
+            await msg.edit(content=message)
+        else:
+            msg = await leaderboard_channel.send(message)
+            main_sheet[num, COLUMN["leaderboard"]] = str(msg.id)
+            main_sheet.commit()
+        return True
+
+    async def _get_user_name_or_id(self, user_id: str) -> str:
+        try:
+            return self.user_cache[user_id]
+        except KeyError:
+            pass
+        try:
+            user = await self.bot.fetch_user(int(user_id))
+            return user.name if user else user_id
+        except Exception as e:
+            await self.logger.warning(f"Failed to fetch user for ID {user_id}: {e}")
+            return user_id
+
     async def pending(
         self, channel: discord.TextChannel, num: Optional[int]
     ) -> discord.Embed:
@@ -102,7 +182,7 @@ class PotdService:
                     color=discord.Color.yellow(),
                 )
                 max_pending = 10
-                for i in range(1, len(main_sheet.get_data())):
+                for i in range(1, len(main_sheet)):
                     if main_sheet[i, COLUMN["status"]] == "pending":
                         embed.add_field(
                             name=f"POTD {i}",
@@ -115,7 +195,7 @@ class PotdService:
             else:
                 if (
                     num < 1
-                    or num >= len(main_sheet.get_data())
+                    or num >= len(main_sheet)
                 ):
                     await self.logger.warning(f"Invalid POTD number: {num}")
                     return discord.Embed(
@@ -160,7 +240,7 @@ class PotdService:
     ) -> bool:
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
-            if num < 1 or num >= len(main_sheet.get_data()):
+            if num < 1 or num >= len(main_sheet):
                 await self.logger.warning(f"Invalid POTD number: {num}")
                 return False
 
@@ -185,7 +265,7 @@ class PotdService:
     async def daily_problem(self) -> None:
         """Post the problem of the day (POTD) every day at a specified time."""
         async with self.lock:
-            if self.gss["data"][1, 0] == "live":
+            if self.gss["data"][1, 2] == "live":
                 self.live_potd = None
                 await self._daily_problem()
             else:
@@ -224,7 +304,7 @@ class PotdService:
             main_sheet = self.gss["Sheet1"]
             if (
                 potd_num < 1
-                or potd_num >= len(main_sheet.get_data())
+                or potd_num >= len(main_sheet)
                 or main_sheet[potd_num, COLUMN["status"]] not in ["done", "active"]
             ):
                 await self.logger.warning(f"Invalid POTD number: {potd_num}")
@@ -248,7 +328,7 @@ class PotdService:
     async def solution(self, potd_num: int, link: str = "") -> str:
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
-            if potd_num < 1 or potd_num >= len(main_sheet.get_data()):
+            if potd_num < 1 or potd_num >= len(main_sheet):
                 await self.logger.warning(f"Invalid POTD number: {potd_num}")
                 return "Invalid POTD number"
             if link:
@@ -297,7 +377,7 @@ class PotdService:
         """Upload a new POTD to the Google Sheet and post it in the specified channel."""
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
-            potd_num = len(main_sheet.get_data())
+            potd_num = len(main_sheet)
             to_append = [
                 potd_num,
                 f"DD MON YYYY",
@@ -339,7 +419,7 @@ class PotdService:
                 await self.logger.warning("No live POTD to submit solution for")
                 return False, "There is no live POTD to submit a solution for."
         main_sheet = self.gss["Sheet1"]
-        if potd_num < 1 or potd_num >= len(main_sheet.get_data()) or main_sheet[potd_num, COLUMN["status"]] == "pending":
+        if potd_num < 1 or potd_num >= len(main_sheet) or main_sheet[potd_num, COLUMN["status"]] == "pending":
             await self.logger.warning(f"Invalid POTD number: {potd_num}")
             return False, "Invalid POTD number."
         potd_botspam_channel = self.bot.get_channel(config.potd_botspam)
@@ -394,7 +474,7 @@ class PotdService:
         await problem_of_the_day_channel.send(
             f"<@&{config.potd_role}> to submit your solution use  /potd submit command in my({self.bot.user.mention}) DM."
         )
-
+        self.gss.create_sheet(f"potd_{potd_num_to_post}")
         # final commit
         main_sheet.commit()
         await self.logger.info("Daily problem processing completed")
@@ -404,7 +484,7 @@ class PotdService:
         if self.live_potd is not None:
             return self.live_potd
         main_sheet = self.gss["Sheet1"]
-        for num in range(1, len(main_sheet.get_data())):
+        for num in range(1, len(main_sheet)):
             if main_sheet[num, COLUMN["status"]] == "live":
                 self.live_potd = num
                 return num
