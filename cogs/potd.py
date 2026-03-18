@@ -152,31 +152,19 @@ class Potd(Cog):
     async def upload(
         self,
         interaction: discord.Interaction,
-        problem_links: str,
+        problem: discord.Attachment,
         topic: str,
-        answer: str,
         difficulty: str,
         source: str,
-        tolerance: str = "1",
-        points: str = "",
+        points: str,
     ):
-        await interaction.response.defer(ephemeral=True)
-        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
-        if not all("attachments" in k for k in problem_links.splitlines()):
-            await self.logger.info(
-                f"Invalid image links provided by {interaction.user}"
-            )
-            return await interaction.followup.send(
-                "Please provide a valid image attachment link. On mobile: use the 'Share' option; on desktop: open the image in a new tab and copy the URL.",
-                ephemeral=True,
-            )
-        
+        await interaction.response.defer(ephemeral=True)        
         channel = utils.get_text_channel(self.bot, config.potd_planning)
         await interaction.followup.send("Processing your query...", ephemeral=True)
         await self.potd_service.upload(
             channel=channel,
             creator=interaction.user.name,
-            problem_links=problem_links,
+            problem=problem,
             topic=topic,
             source=source,
             points=points,

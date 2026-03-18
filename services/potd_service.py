@@ -371,7 +371,7 @@ class PotdService:
         creator: str,
         source: str,
         points: str,
-        problem_links: str,
+        problem: discord.Attachment,
         topic: str,
         difficulty: str,
     ) -> None:
@@ -379,6 +379,7 @@ class PotdService:
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
             potd_num = len(main_sheet)
+            file_name = utils.upload_potd_image("potd_images", potd_num, problem, self.logger)
             to_append = [
                 potd_num,
                 f"DD MON YYYY",
@@ -386,7 +387,7 @@ class PotdService:
                 creator,
                 source,
                 points,
-                problem_links,
+                file_name,
                 topic,
                 difficulty,
                 "",
@@ -398,7 +399,7 @@ class PotdService:
                 num=str(potd_num),
                 date="DD MON YYYY",
                 day="WEEKDAY",
-                links=problem_links,
+                problem_path=file_name,
                 creator=creator,
                 source=source,
                 topic=topic,

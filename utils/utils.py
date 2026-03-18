@@ -351,13 +351,13 @@ async def upload_potd_image(cwd: str, num: int, problem: discord.Attachment, log
     pull_result = subprocess.run(["git", "pull"], cwd=cwd, check=True, capture_output=True, text=True)
     # check for merge conflicts
     if "CONFLICT" in pull_result.stdout or "CONFLICT" in pull_result.stderr:
-        logger.error("Merge conflict detected during git pull")
+        await logger.error("Merge conflict detected during git pull")
         raise Exception("Merge conflict detected. Please resolve manually.")
     if pull_result.returncode != 0:
-        logger.error(f"Git pull failed: {pull_result.stderr}")
+        await logger.error(f"Git pull failed: {pull_result.stderr}")
         raise Exception("Failed to pull latest changes from GitHub.")
     
-    image_path = f"potd_images/potd_{num}_{problem.filename}_{random.randint(100, 999)}"
+    image_path = f"potd_images/potd_{num}_{random.randint(1, 9)}_{problem.filename}"
     await problem.save(image_path)
     
     subprocess.run(["git", "add", "."], cwd=cwd, check=True)
@@ -368,13 +368,13 @@ async def upload_potd_image(cwd: str, num: int, problem: discord.Attachment, log
         capture_output=True, 
         text=True
     )
-    logger.info(f"Git commit output: {commit_result.stdout}")
+    await logger.info(f"Git commit output: {commit_result.stdout}")
     if commit_result.returncode != 0:
-        logger.error(f"Git commit failed: {commit_result.stderr}")
+        await logger.error(f"Git commit failed: {commit_result.stderr}")
         raise Exception("Failed to commit changes to GitHub.")
     
     subprocess.run(["git", "push"], cwd=cwd, check=True)
-    logger.info("Image successfully pushed to GitHub!")
+    await logger.info("Image successfully pushed to GitHub!")
     
     
     return image_path
