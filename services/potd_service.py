@@ -186,7 +186,7 @@ class PotdService:
                     if main_sheet[i, COLUMN["status"]] == "pending":
                         embed.add_field(
                             name=f"POTD {i}",
-                            value=(f"{main_sheet[i, COLUMN['problem path']]}"),
+                            value=(f"Topic: {main_sheet[i, COLUMN['topic']]}, Points: {main_sheet[i, COLUMN['points']]}, Source: {main_sheet[i, COLUMN['source']]}"),
                             inline=False,
                         )
                         if len(embed.fields) >= max_pending:

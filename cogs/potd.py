@@ -207,7 +207,6 @@ class Potd(Cog):
         self, interaction: discord.Interaction, num: Optional[int] = None
     ):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         embed = await self.potd_service.pending(interaction.channel, num)
         await interaction.followup.send(embed=embed)
 
