@@ -222,8 +222,6 @@ class PotdService:
                     creator=main_sheet[num, COLUMN["creator"]],
                     source=main_sheet[num, COLUMN["source"]],
                     difficulty=main_sheet[num, COLUMN["difficulty"]],
-                    answer=main_sheet[num, COLUMN["answer"]],
-                    tolerance=main_sheet[num, COLUMN["tolerance"]],
                     topic=main_sheet[num, COLUMN["topic"]],
                 )
                 return embed
