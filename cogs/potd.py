@@ -261,7 +261,6 @@ class Potd(Cog):
     @requires_permission(Permission.EVERYONE)
     async def help(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         user = interaction.user
 
         roles = [r.id for r in user.roles] if isinstance(user, discord.Member) else []

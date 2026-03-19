@@ -120,10 +120,10 @@ class PotdService:
         async with self.lock:
             return await self._update_leaderboard(num)
             
-    async def _update_leaderboard(self, num: int) -> bool:
+    async def _update_leaderboard(self, potd_num: int) -> bool:
         main_sheet = self.gss["Sheet1"]
-        if num < 1 or num >= len(main_sheet) or main_sheet[num, COLUMN["status"]] not in ["active", "live"]:
-            await self.logger.warning(f"Invalid POTD number, for update_leaderboard: {num}")
+        if potd_num < 1 or potd_num >= len(main_sheet) or main_sheet[potd_num, COLUMN["status"]] not in ["active", "live"]:
+            await self.logger.warning(f"Invalid POTD number, for update_leaderboard: {potd_num}")
             return False
         scores = defaultdict(int)
         for num in range(1, len(main_sheet)):
@@ -136,10 +136,10 @@ class PotdService:
         message = self.gss["data"][1, 0]
         season = self.gss["data"][1, 1]
         message = message.format(
-            potd=num,
+            potd=potd_num,
             season=season,
         )
-        # self.logger.debug(f"Updating leaderboard for POTD {num} with scores: {scores}")
+        # self.logger.debug(f"Updating leaderboard for POTD {potd_num} with scores: {scores}")
         for rank, (userid, point) in enumerate(
             sorted(scores.items(), key=lambda x: float(x[1]), reverse=True)[:30],
             start=1,
@@ -150,12 +150,12 @@ class PotdService:
         message += "\n```"
         
         leaderboard_channel = self.bot.get_channel(config.potd_leaderboard)
-        if main_sheet[num, COLUMN["leaderboard"]].strip():
-            msg = await leaderboard_channel.fetch_message(int(main_sheet[num, COLUMN["leaderboard"]]))
+        if main_sheet[potd_num, COLUMN["leaderboard"]].strip():
+            msg = await leaderboard_channel.fetch_message(int(main_sheet[potd_num, COLUMN["leaderboard"]]))
             await msg.edit(content=message)
         else:
             msg = await leaderboard_channel.send(message)
-            main_sheet[num, COLUMN["leaderboard"]] = str(msg.id)
+            main_sheet[potd_num, COLUMN["leaderboard"]] = str(msg.id)
             main_sheet.commit()
         return True
 
@@ -224,6 +224,7 @@ class PotdService:
                     source=main_sheet[num, COLUMN["source"]],
                     difficulty=main_sheet[num, COLUMN["difficulty"]],
                     topic=main_sheet[num, COLUMN["topic"]],
+                    points=main_sheet[num, COLUMN["points"]],
                 )
                 return embed
 

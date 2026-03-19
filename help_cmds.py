@@ -104,6 +104,18 @@ potd_cmds_creator = [
         "/potd pending [num]",
         "List POTD uploads awaiting approval or scheduling. Optionally filter by question number to see details of a specific pending item.",
     ),
+    (
+        "/potd update_leaderboard",
+        "Recalculate and post the leaderboard for the current live POTD. Updates ranks based on recent submissions according to scoring rules.",
+    ),
+    (
+        "/potd add_score <num> <user> <score> [user_id]",
+        "Manually add a score for a user's submission to a specific POTD. Specify the problem number, user (mention or ID), and the score to be added.",
+    ),
+    (
+        "/potd edit <num> [fields to edit]",
+        "Edit the details of an existing POTD. Specify the problem number and the fields you want to update (e.g., topic, difficulty, source). This allows curators to correct or improve POTD information after it's been uploaded.",
+    )
 ]
 
 cmds_staff = [
