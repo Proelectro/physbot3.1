@@ -126,7 +126,7 @@ class PotdService:
             await self.logger.warning(f"Invalid POTD number, for update_leaderboard: {potd_num}")
             return False
         scores = defaultdict(int)
-        for num in range(1, len(main_sheet)):
+        for num in range(1, potd_num + 1):
             if main_sheet[num, COLUMN["status"]] in ["live", "active"]:
                 score_sheet = self.gss[f"potd_{num}"]
                 for row in range(len(score_sheet)):
