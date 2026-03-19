@@ -29,6 +29,24 @@ class Potd(Cog):
         self.potd_service = PotdService(bot)
         self.daily_potd_loop.start()
 
+    @Cog.listener()
+    @catch_errors
+    async def on_message(self, message: discord.Message):
+        if message.author.bot or isinstance(message.author, discord.Member):
+            return
+        if "POTD" in message.content.upper():
+            await self.logger.info(
+                f"POTD mention detected from {message.author} in {message.channel}"
+            )
+            await message.channel.send(
+                "To submit your solution of a POTD type /potd submit and click on the command. As shown below.",
+                file=discord.File(os.path.join("images", "submit.png")),
+            )
+            await message.channel.send(
+                "Attach your solution image/ pdf and specify the POTD number if you are submitting for a past problem. If no number is given, it will be submitted for the current live problem.",
+                file=discord.File(os.path.join("images", "potd.png")),
+            )
+
     @tasks.loop(time=time(14, 30))  # 14:30 UTC = 20:00 IST
     @catch_errors
     async def daily_potd_loop(self):

@@ -71,7 +71,7 @@ potd_cmds_everyone = [
     ),
     (
         "/potd solution <num>",
-        "Displays the official solution and accepted answer for a specific POTD. Great for checking the correct approach or explanation.",
+        "Displays the official solution for a specific POTD. Great for checking the correct approach or explanation.",
     ),
     (
         "/potd submit <solution> [num]",
@@ -80,10 +80,6 @@ potd_cmds_everyone = [
     (
         "/potd help",
         "Shows this help message, listing all available POTD commands you have permission to use.",
-    ),
-    (
-        "/potd faq [num]",
-        "For experianced user to give a quick reply to common questions.",
     ),
     (
         "/potd random [topic] [curator] [difficulty]",
