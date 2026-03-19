@@ -35,8 +35,8 @@ qotd_cmds_everyone = [
 ]
 qotd_cmds_creator = [
     (
-        "/qotd upload <links> <topic> <answer> <difficulty> [tolerance] [source] [points]",
-        "Add a new QOTD to the planning queue. Provide one or more image URLs, the topic, the correct numeric answer, difficulty (e.g., easy/medium/hard), optional tolerance percentage, source reference, and legacy points field.",
+        "/qotd upload <problem> <topic> <answer> <difficulty> [tolerance] [source] [points]",
+        "Add a new QOTD to the planning queue. Provide question image as an attachment, the topic, the correct numeric answer, difficulty (e.g., easy/medium/hard), optional tolerance percentage, source reference, and legacy points field.",
     ),
     (
         "/qotd update_solution <num> <link>",
@@ -93,8 +93,8 @@ potd_cmds_everyone = [
 
 potd_cmds_creator = [
     (
-        "/potd upload <links> <topic> <answer> <difficulty> [tolerance] [source] [points]",
-        "Add a new POTD to the planning queue. Provide one or more image URLs, the topic, the correct numeric answer, difficulty (e.g., easy/medium/hard), optional tolerance percentage, source reference, and legacy points field.",
+        "/potd upload <problem> <topic> <points> <difficulty> [source]",
+        "Add a new POTD to the planning queue. Attach problem image, difficulty (e.g., 1/2/3/4/5), source reference, and points.",
     ),
     (
         "/potd update_solution <num> <link>",
@@ -105,8 +105,8 @@ potd_cmds_creator = [
         "List POTD uploads awaiting approval or scheduling. Optionally filter by question number to see details of a specific pending item.",
     ),
     (
-        "/potd update_leaderboard",
-        "Recalculate and post the leaderboard for the current live POTD. Updates ranks based on recent submissions according to scoring rules.",
+        "/potd update_leaderboard <num>",
+        "Recalculate and post the leaderboard for the specified POTD.",
     ),
     (
         "/potd add_score <num> <user> <score> [user_id]",
