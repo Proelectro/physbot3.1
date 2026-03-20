@@ -185,6 +185,7 @@ class Potd(Cog):
             points=points,
             difficulty=difficulty,
         )
+        await interaction.followup.send("POTD request processed.", ephemeral=True)
         await self.logger.warning(
             f"POTD upload initiated by {interaction.user} for POTD"
         )
