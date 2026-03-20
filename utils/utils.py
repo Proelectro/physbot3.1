@@ -3,6 +3,7 @@ import functools
 import random
 import traceback
 import datetime
+import os
 import enum
 import time
 from typing import Optional, Union
@@ -357,7 +358,13 @@ async def upload_potd_image(cwd: str, num: int, problem: discord.Attachment, log
         await logger.error(f"Git pull failed: {pull_result.stderr}")
         raise Exception("Failed to pull latest changes from GitHub.")
     
-    image_path = f"potd_images/potd_{num}_{random.randint(1, 9)}_{problem.filename}"
+    image_path = f"potd_images/potd_{num}_{problem.filename}"
+    # check if file already exists
+    cnt = 1
+    while os.path.exists(image_path):
+        image_path = f"potd_images/potd_{num}_{cnt}_{problem.filename}"
+        cnt += 1
+
     await problem.save(image_path)
     
     subprocess.run(["git", "add", "."], cwd=cwd, check=True)

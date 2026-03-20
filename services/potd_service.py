@@ -232,7 +232,7 @@ class PotdService:
         self,
         num: int,
         problem: discord.Attachment,
-        curator: str,
+        curator: discord.Member,
         topic: str,
         points: str,
         source: str,
@@ -381,7 +381,7 @@ class PotdService:
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
             potd_num = len(main_sheet)
-            file_name = utils.upload_potd_image("potd_images", potd_num, problem, self.logger)
+            file_name = await utils.upload_potd_image("potd_images", potd_num, problem, self.logger)
             to_append = [
                 potd_num,
                 f"DD MON YYYY",
