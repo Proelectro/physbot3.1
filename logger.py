@@ -63,10 +63,11 @@ class Logger:
             tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
             full_message = f"{message}\n```py\n{tb}\n```"
         
-        # DISCORD LIMIT FIX: Safely truncate if it exceeds ~3900 characters
-        if len(full_message) > 3900:
+        # DISCORD LIMIT FIX: Safely truncate if it exceeds ~1900 characters
+        if len(full_message) > 1900:
             # Slice the string and append the closing markdown ticks
-            full_message = full_message[:3900] + "\n...[Traceback truncated]...\n```"
+            full_message = full_message[:1900] + "\n...[Traceback truncated (check console)]...\n```"
+            print(full_message)
 
         # NOTE: You are currently logging this error as BOTH Info and Error.
         # You might want to remove the Level.INFO line if that was an accident!
