@@ -7,6 +7,7 @@ from discord.ext import commands
 from services.google_sheet_service import GoogleSheetService, LocalSheet
 from logger import Logger
 import random
+from datetime import datetime, timedelta
 import utils.staff_utils as staff_utils
 
 
@@ -81,7 +82,23 @@ class StaffService:
                     msg = await original_channel.send(after.content)
                     self.message_cache[after.id] = msg
                 
-                    
+    async def on_member_join(self, member: discord.Member) -> None:
+        async with self.lock:
+            account_age = member.joined_at - member.created_at
+
+        if account_age < timedelta(days=2):
+            staff_channel = self.bot.get_channel(config.staff_chat)
+            embed = discord.Embed(
+                title="Recently Joined Member",
+                description=f"{member} joined the server. Account age: {account_age.days} days, {account_age.seconds // 3600} hours.",
+                color=discord.Color.red(),
+                timestamp=datetime.utcnow()
+                
+            )
+            embed.set_thumbnail(url=member.avatar.url if member.avatar else None)
+            embed.set_footer(text=f"{member.id}")
+            await staff_channel.send(embed=embed)
+            
     async def clear(self):
         while self.lock.locked():
             await asyncio.sleep(0.1)
