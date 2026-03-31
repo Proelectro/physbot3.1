@@ -624,8 +624,7 @@ class QotdService:
         assert isinstance(
             qotd_logs, discord.TextChannel
         ), "QOTD Logs channel not found"
-        async for msg in qotd_logs.history(limit=1000):
-            await msg.delete()  
+        await qotd_logs.purge()
 
     async def _get_scores(self, user_id: str):
         main_sheet = self.gss["Sheet1"]
