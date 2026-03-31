@@ -1,4 +1,5 @@
 cogs = [
+    "cogs.qotd",
     "cogs.potd",
     "cogs.messages",
     "cogs.miscellaneous",
@@ -32,16 +33,16 @@ black = 0
 blue = 255
 
 # QOTD Channels and roles
-question_of_the_day = 869048109810987009
-qotd_planning = 916694068300509254
-qotd_creator = 916695478077386842
-qotd_botspam = 868858169370218556
-qotd_solver = 872138356925010021
-leaderboard = 869129118799757312
-qotd_role = 871912562659307592
-qotd_toggle = 1031814291839520788
-qotd_discussion = 869048153721167892
-qotd_logs = 1416447141693493290
+question_of_the_day = 1488059861643038861
+qotd_planning = 1488398909104459836
+qotd_creator = 1488144255741464736
+qotd_botspam = 1488399042408091739
+qotd_solver = 1488423496135741513
+leaderboard = 1488060318449008680
+qotd_role = 1478784307354140702
+# qotd_toggle = 1031814291839520788
+qotd_discussion = 1488060187259699282
+qotd_logs = 1488423859953864815
 
 # Staff monitoring
 category = 1480088520726024232

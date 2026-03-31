@@ -7,4 +7,9 @@ git checkout main
 git pull
 cd ..
 
+cd qotd_images
+git checkout main
+git pull
+cd ..
+
 python physbot.py

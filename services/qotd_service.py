@@ -92,11 +92,12 @@ class QotdService:
                 return False
             qotd_num = random.choice(valid_qotds)
             await utils.post_question(
+                pqotd="QOTD",
                 channel=channel,
                 num=main_sheet[qotd_num, COLUMN["qotd_num"]],
                 date=main_sheet[qotd_num, COLUMN["date"]],
                 day=main_sheet[qotd_num, COLUMN["day"]],
-                links=main_sheet[qotd_num, COLUMN["question link"]],
+                links=main_sheet[qotd_num, COLUMN["question path"]],
                 creator=main_sheet[qotd_num, COLUMN["creator"]],
                 difficulty=main_sheet[qotd_num, COLUMN["difficulty"]],
                 topic=main_sheet[qotd_num, COLUMN["topic"]],
@@ -114,18 +115,23 @@ class QotdService:
                     title="Pending QOTD",
                     color=discord.Color.yellow(),
                 )
-                for i in range(1, len(main_sheet.get_data())):
+                max_pending = 10
+                for i in range(1, len(main_sheet)):
                     if main_sheet[i, COLUMN["status"]] == "pending":
                         embed.add_field(
                             name=f"QOTD {i}",
-                            value=(f"{main_sheet[i, COLUMN['question link']]}"),
+                            value=(f"Topic: {main_sheet[i, COLUMN['topic']]}, Source: {main_sheet[i, COLUMN['source']]}"),
                             inline=False,
                         )
+                        if len(embed.fields) >= max_pending:
+                            break
+                if not embed.fields:
+                    embed.description = "No pending QOTD found."
                 return embed
             else:
                 if (
                     num < 1
-                    or num >= len(main_sheet.get_data())
+                    or num >= len(main_sheet)
                 ):
                     await self.logger.warning(f"Invalid QOTD number: {num}")
                     return discord.Embed(
@@ -137,17 +143,13 @@ class QotdService:
                     title=f"Pending QOTD #{num}",
                     color=discord.Color.green(),
                 )
-                embed.add_field(
-                    name="Question Link",
-                    value=main_sheet[num, COLUMN["question link"]],
-                    inline=False,
-                )
                 await utils.post_question(
+                    pqotd="QOTD",
                     channel=channel,
                     num=main_sheet[num, COLUMN["qotd_num"]],
                     date=main_sheet[num, COLUMN["date"]],
                     day=main_sheet[num, COLUMN["day"]],
-                    links=main_sheet[num, COLUMN["question link"]],
+                    file_path=main_sheet[num, COLUMN["question path"]],
                     creator=main_sheet[num, COLUMN["creator"]],
                     source=main_sheet[num, COLUMN["source"]],
                     difficulty=main_sheet[num, COLUMN["difficulty"]],
@@ -174,8 +176,8 @@ class QotdService:
                 await self.logger.warning(f"Invalid QOTD number: {num}")
                 return False
 
-            main_sheet[num, COLUMN["question link"]] = (
-                question_links or main_sheet[num, COLUMN["question link"]]
+            main_sheet[num, COLUMN["question path"]] = (
+                question_links or main_sheet[num, COLUMN["question path"]]
             )
             main_sheet[num, COLUMN["creator"]] = (
                 curator or main_sheet[num, COLUMN["creator"]]
@@ -240,11 +242,12 @@ class QotdService:
 
             await self.logger.info(f"Posting QOTD {qotd_num}")
             await utils.post_question(
+                pqotd="QOTD",
                 channel=channel,
                 num=self.gss["Sheet1"][qotd_num, COLUMN["qotd_num"]],
                 date=self.gss["Sheet1"][qotd_num, COLUMN["date"]],
                 day=self.gss["Sheet1"][qotd_num, COLUMN["day"]],
-                links=self.gss["Sheet1"][qotd_num, COLUMN["question link"]],
+                links=self.gss["Sheet1"][qotd_num, COLUMN["question path"]],
                 creator=self.gss["Sheet1"][qotd_num, COLUMN["creator"]],
                 difficulty=self.gss["Sheet1"][qotd_num, COLUMN["difficulty"]],
                 topic=self.gss["Sheet1"][qotd_num, COLUMN["topic"]],
@@ -310,6 +313,7 @@ class QotdService:
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
             qotd_num = len(main_sheet.get_data())
+            file_name = await utils.upload_image("qotd_images", qotd_num, question, self.logger)
             to_append = [
                 qotd_num,
                 f"DD MON YYYY",
@@ -317,7 +321,7 @@ class QotdService:
                 creator,
                 source,
                 points,
-                question_links,
+                file_name,
                 topic,
                 difficulty,
                 "",
@@ -326,11 +330,12 @@ class QotdService:
                 "pending",
             ]
             await utils.post_question(
+                pqotd="QOTD",
                 channel=channel,
                 num=str(qotd_num),
                 date="DD MON YYYY",
                 day="WEEKDAY",
-                links=question_links,
+                file_path=file_name,
                 creator=creator,
                 source=source,
                 topic=topic,
@@ -567,11 +572,12 @@ class QotdService:
         main_sheet[qotd_num_to_post, COLUMN["date"]] = utils.get_date()
         main_sheet[qotd_num_to_post, COLUMN["day"]] = utils.get_day()
         await utils.post_question(
+            pqotd="QOTD",
             channel=self.bot.get_channel(config.question_of_the_day),
             num=main_sheet[qotd_num_to_post, COLUMN["qotd_num"]],
             date=main_sheet[qotd_num_to_post, COLUMN["date"]],
             day=main_sheet[qotd_num_to_post, COLUMN["day"]],
-            links=main_sheet[qotd_num_to_post, COLUMN["question link"]],
+            file_path=main_sheet[qotd_num_to_post, COLUMN["question path"]],
             creator=main_sheet[qotd_num_to_post, COLUMN["creator"]],
             difficulty=main_sheet[qotd_num_to_post, COLUMN["difficulty"]],
             announce=True,

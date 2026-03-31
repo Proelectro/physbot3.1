@@ -67,7 +67,9 @@ class Qotd(Cog):
     # async def before_hourly_task(self):
     #     await self.bot.wait_until_ready()
 
-    @tasks.loop(time=time(17, 30))  # 17:30 UTC = 23:00 IST
+    
+    
+    @tasks.loop(time=time(*utils.from_ist_to_utc(12, 18))) 
     @catch_errors
     async def daily_qotd_loop(self):
         await self.logger.info("Starting daily QOTD task")
@@ -146,7 +148,6 @@ class Qotd(Cog):
         self, interaction: discord.Interaction, answer: str, num: Optional[int] = None
     ):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         await self.qotd_service.submit(interaction, num, answer)
 
     @group.command(name="upload", description="Upload a new QOTD. Only for curators.")

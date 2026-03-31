@@ -85,7 +85,7 @@ class PotdService:
                 num=main_sheet[potd_num, COLUMN["potd_num"]],
                 date=main_sheet[potd_num, COLUMN["date"]],
                 day=main_sheet[potd_num, COLUMN["day"]],
-                problem_path=main_sheet[potd_num, COLUMN["problem path"]],
+                file_path=main_sheet[potd_num, COLUMN["problem path"]],
                 creator=main_sheet[potd_num, COLUMN["creator"]],
                 difficulty=main_sheet[potd_num, COLUMN["difficulty"]],
                 topic=main_sheet[potd_num, COLUMN["topic"]],
@@ -219,7 +219,7 @@ class PotdService:
                     num=main_sheet[num, COLUMN["potd_num"]],
                     date=main_sheet[num, COLUMN["date"]],
                     day=main_sheet[num, COLUMN["day"]],
-                    problem_path=main_sheet[num, COLUMN["problem path"]],
+                    file_path=main_sheet[num, COLUMN["problem path"]],
                     creator=main_sheet[num, COLUMN["creator"]],
                     source=main_sheet[num, COLUMN["source"]],
                     difficulty=main_sheet[num, COLUMN["difficulty"]],
@@ -245,7 +245,7 @@ class PotdService:
                 return False
 
             if problem:
-                image_path = await utils.upload_potd_image("potd_images", num, problem, self.logger)
+                image_path = await utils.upload_image("potd_images", num, problem, self.logger)
                 main_sheet[num, COLUMN["problem path"]] = image_path
             else:
                 main_sheet[num, COLUMN["problem path"]] = main_sheet[num, COLUMN["problem path"]]
@@ -320,7 +320,7 @@ class PotdService:
                 num=self.gss["Sheet1"][potd_num, COLUMN["potd_num"]],
                 date=self.gss["Sheet1"][potd_num, COLUMN["date"]],
                 day=self.gss["Sheet1"][potd_num, COLUMN["day"]],
-                problem_path=self.gss["Sheet1"][potd_num, COLUMN["problem path"]],
+                file_path=self.gss["Sheet1"][potd_num, COLUMN["problem path"]],
                 creator=self.gss["Sheet1"][potd_num, COLUMN["creator"]],
                 difficulty=self.gss["Sheet1"][potd_num, COLUMN["difficulty"]],
                 topic=self.gss["Sheet1"][potd_num, COLUMN["topic"]],
@@ -381,7 +381,7 @@ class PotdService:
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
             potd_num = len(main_sheet)
-            file_name = await utils.upload_potd_image("potd_images", potd_num, problem, self.logger)
+            file_name = await utils.upload_image("potd_images", potd_num, problem, self.logger)
             to_append = [
                 potd_num,
                 f"DD MON YYYY",
@@ -401,7 +401,7 @@ class PotdService:
                 num=str(potd_num),
                 date="DD MON YYYY",
                 day="WEEKDAY",
-                problem_path=file_name,
+                file_path=file_name,
                 creator=creator,
                 source=source,
                 topic=topic,
@@ -461,7 +461,7 @@ class PotdService:
             num=main_sheet[potd_num_to_post, COLUMN["potd_num"]],
             date=main_sheet[potd_num_to_post, COLUMN["date"]],
             day=main_sheet[potd_num_to_post, COLUMN["day"]],
-            problem_path=main_sheet[potd_num_to_post, COLUMN["problem path"]],
+            file_path=main_sheet[potd_num_to_post, COLUMN["problem path"]],
             creator=main_sheet[potd_num_to_post, COLUMN["creator"]],
             difficulty=main_sheet[potd_num_to_post, COLUMN["difficulty"]],
             points=main_sheet[potd_num_to_post, COLUMN["points"]],

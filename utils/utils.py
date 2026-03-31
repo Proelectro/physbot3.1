@@ -2,10 +2,10 @@ from copy import error
 import functools
 import random
 import traceback
-import datetime
+from datetime import time as dtime, timedelta, datetime
 import os
 import enum
-import time
+from time import time
 from typing import Optional, Union
 import subprocess
 
@@ -47,7 +47,7 @@ async def post_question(
     num: str,
     date: str,
     day: str,
-    problem_path: str,
+    file_path: str,
     creator: str,
     pqotd: str,
     source: Optional[str] = None,
@@ -67,7 +67,7 @@ async def post_question(
     post6 = f"Category: {topic}\n" if topic else ""
     post7 = f"Answer: {answer} Tolerance: {tolerance}" if answer is not None else ""
 
-    msg1 = await channel.send(post, file=discord.File(problem_path))  # type: ignore
+    msg1 = await channel.send(post, file=discord.File(file_path))  # type: ignore
     msg2 = await channel.send(post2 + post3 + post4 + post5 + post6 + post7)  # type: ignore
     try:
         if announce:
@@ -76,6 +76,8 @@ async def post_question(
     except Exception as e:
         # If the channel is not a forum channel, publishing will fail. We can ignore this error.
         pass
+
+
 
 async def remove_roles(role: discord.Role) -> None:
     """Removes a specific role from all members in the guild.
@@ -325,29 +327,34 @@ def requires_permission(level: Permission):
 
     return decorator
 
+IST_OFFSET = timedelta(hours=5, minutes=30)
 
+def from_ist_to_utc(hour: int, minute: int) -> tuple[int, int]:
+    ist_time = datetime.combine(datetime.today(), dtime(hour, minute))
+    utc_time = ist_time - IST_OFFSET
+    return utc_time.hour, utc_time.minute
 
 
 def get_date() -> str:
     """Get the current date in the format 'dd Mon yyyy'."""
-    return datetime.datetime.now().strftime("%d %b %Y").title()
+    return datetime.now().strftime("%d %b %Y").title()
 
 
 def get_day() -> str:
     """Get the current day of the week."""
-    return datetime.datetime.now().strftime("%A").title()
+    return datetime.now().strftime("%A").title()
 
 
 def get_time() -> str:
     """Get the current time in the 12-hour format. [HH:MM AM/PM UTC]"""
-    return f"<t:{int(time.time())}:t>"
+    return f"<t:{int(time())}:t>"
 
 
 def get_text_channel(bot: commands.Bot, channel_id: int) -> discord.TextChannel:
     channel = bot.get_channel(channel_id)
     return channel  # type: ignore
 
-async def upload_potd_image(cwd: str, num: int, problem: discord.Attachment, logger: Logger) -> str:
+async def upload_image(cwd: str, num: int, problem: discord.Attachment, logger: Logger) -> str:
     subprocess.run(["git", "checkout", "main"], cwd=cwd, check=True)
     pull_result = subprocess.run(["git", "pull"], cwd=cwd, check=True, capture_output=True, text=True)
     # check for merge conflicts
@@ -358,11 +365,12 @@ async def upload_potd_image(cwd: str, num: int, problem: discord.Attachment, log
         await logger.error(f"Git pull failed: {pull_result.stderr}")
         raise Exception("Failed to pull latest changes from GitHub.")
     
-    image_path = f"potd_images/potd_{num}_{problem.filename}"
+    image_path = os.path.join(cwd, f"{problem.filename}")
     # check if file already exists
     cnt = 1
     while os.path.exists(image_path):
-        image_path = f"potd_images/potd_{num}_{cnt}_{problem.filename}"
+        file_name, ext = os.path.splitext(problem.filename)
+        image_path = os.path.join(cwd, f"{file_name} ({cnt}){ext}")
         cnt += 1
 
     await problem.save(image_path)
@@ -370,7 +378,7 @@ async def upload_potd_image(cwd: str, num: int, problem: discord.Attachment, log
     subprocess.run(["git", "add", "."], cwd=cwd, check=True)
     
     commit_result = subprocess.run(
-        ["git", "commit", "-m", f"Added image for POTD {num}"], 
+        ["git", "commit", "-m", f"Added image {image_path} for {num}"], 
         cwd=cwd, 
         capture_output=True, 
         text=True
