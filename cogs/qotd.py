@@ -205,7 +205,6 @@ class Qotd(Cog):
     @requires_permission(Permission.QOTD_CREATOR)
     async def update_leaderboard(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         success = await self.qotd_service.update_leaderboard()
         if success:
             await interaction.followup.send(
@@ -331,7 +330,6 @@ class Qotd(Cog):
     @requires_permission(Permission.DM)
     async def verify_submission(self, interaction: discord.Interaction, num: int):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         embed = await self.qotd_service.verify_submissions(interaction.user, num)
         if embed:
             await interaction.followup.send(embed=embed)
@@ -349,7 +347,6 @@ class Qotd(Cog):
         self, interaction: discord.Interaction, participant: discord.User, num: int
     ):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         embed = await self.qotd_service.verify_submissions(participant, num)
         if embed:
             await interaction.followup.send(embed=embed)
@@ -372,7 +369,6 @@ class Qotd(Cog):
         submission: str,
     ):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         rc, previous_submissions = await self.qotd_service.update_submission(
             participant, num, submission
         )
@@ -400,7 +396,6 @@ class Qotd(Cog):
         self, interaction: discord.Interaction, participant: discord.User, offset: str
     ):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         try:
             offset_val = float(offset)
         except ValueError:
@@ -437,7 +432,6 @@ class Qotd(Cog):
         participant: Optional[discord.User] = None,
     ):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         if participant is None:
             self.empty_run = datetime.now()
             await self.logger.warning(
@@ -471,7 +465,6 @@ class Qotd(Cog):
         self, interaction: discord.Interaction, solver: discord.User = None
     ):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         solver = solver or interaction.user
         embed = await self.qotd_service.get_scores(solver)
         embeds = [embed]
