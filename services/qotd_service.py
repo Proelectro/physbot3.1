@@ -300,7 +300,7 @@ class QotdService:
         creator: str,
         source: str,
         points: str,
-        question_links: str,
+        question: discord.Attachment,
         topic: str,
         difficulty: str,
         answer: str,

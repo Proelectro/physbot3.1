@@ -12,7 +12,7 @@ import utils.utils as utils
 from services.qotd_service import QotdService
 from logger import Logger
 from utils.utils import requires_permission, catch_errors, Permission, PaginatorView
-from help_cmds import cmds_creator, cmds_everyone
+from help_cmds import qotd_cmds_creator, qotd_cmds_everyone
 
 Cog = commands.Cog
 
@@ -100,6 +100,7 @@ class Qotd(Cog):
     @requires_permission(Permission.EVERYONE)
     async def fetch(self, interaction: discord.Interaction, num: int):
         await interaction.response.defer(ephemeral=True)
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         sc = await self.qotd_service.fetch(interaction.channel, num)
         if sc:
             await interaction.followup.send(
@@ -119,6 +120,7 @@ class Qotd(Cog):
     @requires_permission(Permission.EVERYONE)
     async def solution(self, interaction: discord.Interaction, num: int):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         result = await self.qotd_service.solution(num)
         await interaction.followup.send(result)
 
@@ -130,6 +132,7 @@ class Qotd(Cog):
         self, interaction: discord.Interaction, num: int, link: str
     ):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         result = await self.qotd_service.solution(num, link)
         await interaction.followup.send(result)
 
@@ -143,19 +146,19 @@ class Qotd(Cog):
         self, interaction: discord.Interaction, answer: str, num: Optional[int] = None
     ):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         await self.qotd_service.submit(interaction, num, answer)
 
     @group.command(name="upload", description="Upload a new QOTD. Only for curators.")
     @app_commands.describe(
         tolerance="In %",
-        question_links="Image attachment links. Use newlines for multiple links.",
         points="Deprecated, currently just for compatibility.",
     )
     @requires_permission(Permission.QOTD_PLANNING)
     async def upload(
         self,
         interaction: discord.Interaction,
-        question_links: str,
+        question: discord.Attachment,
         topic: str,
         answer: str,
         difficulty: str,
@@ -165,14 +168,6 @@ class Qotd(Cog):
     ):
         await interaction.response.defer(ephemeral=True)
 
-        if not all("attachments" in k for k in question_links.splitlines()):
-            await self.logger.info(
-                f"Invalid image links provided by {interaction.user}"
-            )
-            return await interaction.followup.send(
-                "Please provide a valid image attachment link. On mobile: use the 'Share' option; on desktop: open the image in a new tab and copy the URL.",
-                ephemeral=True,
-            )
         try:
             float(answer)
             float(tolerance)
@@ -189,7 +184,7 @@ class Qotd(Cog):
         await self.qotd_service.upload(
             channel=channel,
             creator=interaction.user.name,
-            question_links=question_links,
+            question=question,
             topic=topic,
             answer=answer,
             tolerance=tolerance,
@@ -208,6 +203,7 @@ class Qotd(Cog):
     @requires_permission(Permission.QOTD_CREATOR)
     async def update_leaderboard(self, interaction: discord.Interaction):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         success = await self.qotd_service.update_leaderboard()
         if success:
             await interaction.followup.send(
@@ -240,6 +236,7 @@ class Qotd(Cog):
         self, interaction: discord.Interaction, num: Optional[int] = None
     ):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         embed = await self.qotd_service.pending(interaction.channel, num)
         await interaction.followup.send(embed=embed)
 
@@ -253,6 +250,7 @@ class Qotd(Cog):
         difficulty: Optional[str] = None,
     ):
         await interaction.response.defer(ephemeral=True)
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         sc = await self.qotd_service.random(
             interaction.channel, topic, curator, difficulty
         )
@@ -284,6 +282,7 @@ class Qotd(Cog):
         tolerance: Optional[str] = None,
     ):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         if question_links and not all(
             "attachments" in k for k in question_links.splitlines()
         ):
@@ -330,6 +329,7 @@ class Qotd(Cog):
     @requires_permission(Permission.DM)
     async def verify_submission(self, interaction: discord.Interaction, num: int):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         embed = await self.qotd_service.verify_submissions(interaction.user, num)
         if embed:
             await interaction.followup.send(embed=embed)
@@ -347,6 +347,7 @@ class Qotd(Cog):
         self, interaction: discord.Interaction, participant: discord.User, num: int
     ):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         embed = await self.qotd_service.verify_submissions(participant, num)
         if embed:
             await interaction.followup.send(embed=embed)
@@ -369,6 +370,7 @@ class Qotd(Cog):
         submission: str,
     ):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         rc, previous_submissions = await self.qotd_service.update_submission(
             participant, num, submission
         )
@@ -396,6 +398,7 @@ class Qotd(Cog):
         self, interaction: discord.Interaction, participant: discord.User, offset: str
     ):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         try:
             offset_val = float(offset)
         except ValueError:
@@ -432,6 +435,7 @@ class Qotd(Cog):
         participant: Optional[discord.User] = None,
     ):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         if participant is None:
             self.empty_run = datetime.now()
             await self.logger.warning(
@@ -465,6 +469,7 @@ class Qotd(Cog):
         self, interaction: discord.Interaction, solver: discord.User = None
     ):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         solver = solver or interaction.user
         embed = await self.qotd_service.get_scores(solver)
         embeds = [embed]
@@ -475,19 +480,12 @@ class Qotd(Cog):
             await interaction.followup.send(embed=embeds[0], view=view)
             view.message = await interaction.original_response()
 
-    @group.command(name="faq", description="To answer a faq.")
-    @requires_permission(Permission.EVERYONE)
-    async def faq(self, interaction: discord.Interaction):
-        faq_data = self.qotd_service.get_faq()
-        view = FAQView(faq_data)
-        await interaction.response.send_message(
-            "Choose a question from the dropdown below:", view=view, ephemeral=True
-        )
 
     @group.command(name="end_season", description="Only for proelectro")
     @requires_permission(Permission.PROELECTRO)
     async def end_season(self, interaction: discord.Interaction):
         await interaction.response.defer()
+        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         msg = await self.qotd_service.end_season()
         await interaction.followup.send(msg)
         await self.logger.warning("Season ended by proelectro")
@@ -504,7 +502,7 @@ class Qotd(Cog):
         is_creator = config.qotd_creator in roles
 
         # Pick correct command list
-        command_list = cmds_creator if is_creator else cmds_everyone
+        command_list = qotd_cmds_creator if is_creator else qotd_cmds_everyone
         title = "🏆 Creator Commands" if is_creator else "📋 General QOTD Commands"
 
         # Build pages
@@ -530,32 +528,6 @@ class Qotd(Cog):
         view = PaginatorView(pages, interaction.user)
         await interaction.followup.send(embed=pages[0], view=view, ephemeral=True)
         view.message = await interaction.original_response()
-
-
-class FAQDropdown(discord.ui.Select):
-    def __init__(self, faq_data):
-        self.faq_data = faq_data  # List of (short_label, full_question, answer)
-        options = [
-            discord.SelectOption(label=short, description=full[:100])
-            for short, full, _ in faq_data
-        ]
-        super().__init__(placeholder="Select a question...", options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        selected_label = self.values[0]
-        for short, full, answer in self.faq_data:
-            if short == selected_label:
-                embed = discord.Embed(
-                    title=full, description=answer, color=discord.Color.blue()
-                )
-                await interaction.response.send_message(embed=embed)
-                break
-
-
-class FAQView(discord.ui.View):
-    def __init__(self, faq_data):
-        super().__init__()
-        self.add_item(FAQDropdown(faq_data))
 
 
 

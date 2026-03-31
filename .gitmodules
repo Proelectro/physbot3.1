@@ -2,3 +2,6 @@
 	path = potd_images
 	url = git@github.com:Proelectro/potd_images.git
 	branch = main
+[submodule "qotd_images"]
+	path = qotd_images
+	url = git@github.com:Proelectro/qotd_images.git
