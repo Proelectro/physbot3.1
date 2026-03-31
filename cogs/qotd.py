@@ -69,7 +69,7 @@ class Qotd(Cog):
 
     
     
-    @tasks.loop(time=time(*utils.from_ist_to_utc(22, 30))) 
+    @tasks.loop(time=time(*utils.from_ist_to_utc(22, 40))) 
     @catch_errors
     async def daily_qotd_loop(self):
         await self.logger.info("Starting daily QOTD task")
