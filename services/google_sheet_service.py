@@ -32,7 +32,7 @@ class LocalSheet:
         self._dirty = True
 
     def append_row(self, row: list[str]) -> None:
-        self._data.append(row)
+        self._data.append([str(cell) for cell in row])
         self._dirty = True
 
     def _clean(self):
