@@ -25,10 +25,6 @@ qotd_cmds_everyone = [
         "Get a detailed transcript of a user's QOTD score history. Defaults to your own score if no user is mentioned.",
     ),
     (
-        "/qotd faq [num]",
-        "For experianced user to give a quick reply to common questions.",
-    ),
-    (
         "/qotd random [topic] [curator] [difficulty]",
         "Fetch a random QOTD based on optional filters like topic, curator, or difficulty. If no filters are provided, it returns any random QOTD.",
     ),

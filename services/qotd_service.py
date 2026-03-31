@@ -615,11 +615,17 @@ class QotdService:
             "Placeholder for leaderboard message"
         )
         main_sheet[qotd_num_to_post, COLUMN["leaderboard"]] = str(leaderboard_msg.id)
-
-
-        # final commit
         main_sheet.commit()
+        await self._prune_logs()
         await self.logger.info("Daily question processing completed")
+
+    async def _prune_logs(self):
+        qotd_logs = utils.get_text_channel(self.bot, config.qotd_logs)
+        assert isinstance(
+            qotd_logs, discord.TextChannel
+        ), "QOTD Logs channel not found"
+        async for msg in qotd_logs.history(limit=1000):
+            await msg.delete()  
 
     async def _get_scores(self, user_id: str):
         main_sheet = self.gss["Sheet1"]
