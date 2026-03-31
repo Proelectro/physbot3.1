@@ -524,8 +524,8 @@ class QotdService:
                 if (user.id, qotd_num) not in self.solved_cache:
                     qotd_logs = utils.get_text_channel(self.bot, config.qotd_logs)
                     color = [discord.Color.green(), discord.Color.yellow(), discord.Color.blue()][qotd_num % 3]
-                    embed = create_log_embed(user, qotd_num, color)
-                    await qotd_logs.send(embed=embed)
+                    log_embed = create_log_embed(user, qotd_num, color)
+                    await qotd_logs.send(embed=log_embed)
                     self.solved_cache.add((user.id, qotd_num))
                 member = phods.get_member(user.id)
                 if member:

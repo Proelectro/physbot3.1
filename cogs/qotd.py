@@ -91,9 +91,9 @@ class Qotd(Cog):
                 ),
             )
         else:
-            await self.logger.warning(
-                f"COOLDOWN TYPE 1: On cooldown for {interaction.user if interaction else 'unknown'}: {error.retry_after:.2f}s"
-            )
+            # await self.logger.warning(
+            #     f"COOLDOWN TYPE 1: On cooldown for {interaction.user if interaction else 'unknown'}: {error.retry_after:.2f}s"
+            # )
             await interaction.response.send_message(str(error), ephemeral=True)
 
     # Commands
@@ -181,7 +181,7 @@ class Qotd(Cog):
             )
 
         channel = utils.get_text_channel(self.bot, config.qotd_planning)
-        await interaction.followup.send("Processing your query...", ephemeral=True)
+        msg = await interaction.followup.send("Processing your query...", ephemeral=True)
         await self.qotd_service.upload(
             channel=channel,
             creator=interaction.user.name,
@@ -196,6 +196,7 @@ class Qotd(Cog):
         await self.logger.warning(
             f"QOTD upload initiated by {interaction.user} for QOTD"
         )
+        await interaction.followup.edit_message(message_id=msg.id, content="Your QOTD uploaded for review. Thank you!")
 
     @group.command(
         name="update_leaderboard",
