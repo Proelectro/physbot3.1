@@ -247,12 +247,10 @@ class PotdService:
             if problem:
                 image_path = await utils.upload_image("potd_images", num, problem, self.logger)
                 main_sheet[num, COLUMN["problem path"]] = image_path
-            else:
-                main_sheet[num, COLUMN["problem path"]] = main_sheet[num, COLUMN["problem path"]]
+
             if curator:
                 main_sheet[num, COLUMN["creator"]] = curator.username
-            else:
-                main_sheet[num, COLUMN["creator"]] = main_sheet[num, COLUMN["creator"]]
+
             main_sheet[num, COLUMN["topic"]] = topic or main_sheet[num, COLUMN["topic"]]
             main_sheet[num, COLUMN["points"]] = points or main_sheet[num, COLUMN["points"]]
             main_sheet[num, COLUMN["source"]] = (

@@ -162,8 +162,8 @@ class QotdService:
     async def edit(
         self,
         num: int,
-        question_links: str,
-        curator: str,
+        problem: discord.Attachment,
+        curator: discord.Member,
         topic: str,
         answer: str,
         tolerance: str,
@@ -175,13 +175,13 @@ class QotdService:
             if num < 1 or num >= len(main_sheet.get_data()):
                 await self.logger.warning(f"Invalid QOTD number: {num}")
                 return False
+            if problem:
+                image_path = await utils.upload_image("potd_images", num, problem, self.logger)
+                main_sheet[num, COLUMN["question path"]] = image_path
 
-            main_sheet[num, COLUMN["question path"]] = (
-                question_links or main_sheet[num, COLUMN["question path"]]
-            )
-            main_sheet[num, COLUMN["creator"]] = (
-                curator or main_sheet[num, COLUMN["creator"]]
-            )
+            if curator:
+                main_sheet[num, COLUMN["creator"]] = curator.username
+
             main_sheet[num, COLUMN["topic"]] = topic or main_sheet[num, COLUMN["topic"]]
             main_sheet[num, COLUMN["answer"]] = (
                 answer or main_sheet[num, COLUMN["answer"]]

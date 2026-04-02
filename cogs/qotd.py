@@ -237,7 +237,6 @@ class Qotd(Cog):
         self, interaction: discord.Interaction, num: Optional[int] = None
     ):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         embed = await self.qotd_service.pending(interaction.channel, num)
         await interaction.followup.send(embed=embed)
 
@@ -275,7 +274,7 @@ class Qotd(Cog):
         interaction: discord.Interaction,
         num: int,
         curator: Optional[discord.User] = None,
-        question_links: Optional[str] = None,
+        problem: Optional[discord.Attachment] = None,
         topic: Optional[str] = None,
         answer: Optional[str] = None,
         difficulty: Optional[str] = None,
@@ -283,17 +282,6 @@ class Qotd(Cog):
         tolerance: Optional[str] = None,
     ):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
-        if question_links and not all(
-            "attachments" in k for k in question_links.splitlines()
-        ):
-            await self.logger.info(
-                f"Invalid image links provided by {interaction.user}"
-            )
-            return await interaction.followup.send(
-                "Please provide a valid image attachment link. On mobile: use the 'Share' option; on desktop: open the image in a new tab and copy the URL.",
-                ephemeral=True,
-            )
         try:
             answer and float(answer)
             tolerance and float(tolerance)
@@ -307,7 +295,7 @@ class Qotd(Cog):
 
         rc = await self.qotd_service.edit(
             num=num,
-            question_links=question_links,
+            problem=problem,
             curator=curator,
             topic=topic,
             answer=answer,
