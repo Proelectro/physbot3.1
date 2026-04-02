@@ -249,7 +249,7 @@ class PotdService:
                 main_sheet[num, COLUMN["problem path"]] = image_path
 
             if curator:
-                main_sheet[num, COLUMN["creator"]] = curator.username
+                main_sheet[num, COLUMN["creator"]] = str(curator)
 
             main_sheet[num, COLUMN["topic"]] = topic or main_sheet[num, COLUMN["topic"]]
             main_sheet[num, COLUMN["points"]] = points or main_sheet[num, COLUMN["points"]]
