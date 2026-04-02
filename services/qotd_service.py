@@ -180,7 +180,7 @@ class QotdService:
                 main_sheet[num, COLUMN["question path"]] = image_path
 
             if curator:
-                main_sheet[num, COLUMN["creator"]] = str(curator)
+                main_sheet[num, COLUMN["creator"]] = curator.name
 
             main_sheet[num, COLUMN["topic"]] = topic or main_sheet[num, COLUMN["topic"]]
             main_sheet[num, COLUMN["answer"]] = (
