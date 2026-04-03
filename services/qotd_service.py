@@ -616,7 +616,7 @@ class QotdService:
         )
         main_sheet[qotd_num_to_post, COLUMN["leaderboard"]] = str(leaderboard_msg.id)
         main_sheet.commit()
-        await self._prune_logs()
+        # await self._prune_logs()
         await self.logger.info("Daily question processing completed")
 
     async def _prune_logs(self):
@@ -743,7 +743,7 @@ class QotdService:
             creator=main_sheet[qotd_num, COLUMN["creator"]],
             base=stats.base,
             weighted_solves=stats.weight_solves,
-            total_unique_attempters=stats.total_unique_attempters,
+            num_participants=stats.num_participants,
             solves_official=stats.total_solves,
             total_attempts=stats.total_attempts,
         )

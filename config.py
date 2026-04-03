@@ -1,9 +1,9 @@
 cogs = [
+    "cogs.staff",
     "cogs.qotd",
     "cogs.potd",
     "cogs.messages",
     "cogs.miscellaneous",
-    "cogs.staff",
 ]
 log_important = 1019451650504663100
 log_unimportant = 1031869219974946847
@@ -44,6 +44,5 @@ qotd_role = 1478784307354140702
 qotd_discussion = 1488060187259699282
 qotd_logs = 1488423859953864815
 
-# Staff monitoring
-category = 1480088520726024232
-staff_chat = 1477817938877743165
+# Staff
+physbot_dm_forum = 1489562646914011287

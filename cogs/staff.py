@@ -45,10 +45,11 @@ class Staff(Cog):
         await self.staff_service.on_message_edit(before, after)
         
     @Cog.listener()
-    async def on_delete_message(self, message: discord.Message):
+    @catch_errors
+    async def on_message_delete(self, message: discord.Message):
         if message.author.bot:
             return        
-        await self.staff_service.on_delete_message(message)   
+        await self.staff_service.on_message_delete(message)   
 
     @Cog.listener() 
     async def on_member_join(self, member: discord.Member):

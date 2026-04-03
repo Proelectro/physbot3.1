@@ -16,71 +16,66 @@ class StaffService:
     def __init__(self, bot: commands.Bot) -> None:
         """Initialize the StaffService with a bot instance."""
         self.logger = Logger(bot)
-        self.gss: GoogleSheetService = GoogleSheetService("STAFF")
         self.bot: commands.Bot = bot
         self.lock: asyncio.Lock = asyncio.Lock()
-        self.monitored_cache: Optional[Dict[discord.TextChannel, discord.TextChannel]] = None
-        self.reverse_monitored_cache: Optional[Dict[discord.TextChannel, discord.TextChannel]] = None
-        self.message_cache: Dict[int, discord.Message] = {}
+        self.message_cache: Dict[int, int] = {}
+        self.physbot_dm_forum_id = config.physbot_dm_forum
     
     async def on_message(self, message: discord.Message) -> None:
         async with self.lock:
             if message.author.bot:
                 return
-            await self._load_cache()
-            if message.channel in self.monitored_cache:
-                logging_channel = self.monitored_cache[message.channel]
-                embed = staff_utils.send_message_embed(message, discord.colour.Color.green())
-                await logging_channel.send(embed=embed)
+            if isinstance(message.channel, discord.Thread) and message.channel.parent_id == self.physbot_dm_forum_id:
+                if message.content and message.content.startswith("//"):
+                    return
+                user_id = staff_utils.get_user_id_from_thread(message.channel)
+                assert user_id is not None, f"Could not extract user ID from thread {message.channel.id} for relaying."
+                user_channel = self.bot.get_user(user_id)
+                assert user_channel is not None, f"Could not find user with ID {user_id} for relaying."
+                await staff_utils.relay_content(user_channel, message, self.message_cache)
                 
-            elif message.channel in self.reverse_monitored_cache:
-                original_channel = self.reverse_monitored_cache[message.channel]
-                if message.content and not message.content.startswith("//"):
-                    msg = await original_channel.send(message.content)
-                    self.message_cache[message.id] = msg
+            elif isinstance(message.channel, discord.DMChannel) and message.author.id != self.bot.user.id: 
+                forum = self.bot.get_channel(self.physbot_dm_forum_id)
+                thread = await staff_utils.get_user_thread(forum, message.author)
+                assert thread is not None, f"Could not find or create thread for user {message.author.id} in forum {self.physbot_dm_forum_id} for relaying."
+                await staff_utils.relay_content(thread, message, self.message_cache)
+                
         
-    async def on_delete_message(self, message: discord.Message) -> None:
+    async def on_message_delete(self, message: discord.Message) -> None:
         async with self.lock:
             if message.author.bot:
                 return
-            await self._load_cache()
-            if message.channel in self.monitored_cache:
-                logging_channel = self.monitored_cache[message.channel]
-                embed = staff_utils.send_message_embed(message, discord.colour.Color.red())
-                await logging_channel.send(embed=embed)
-                
-            elif message.channel in self.reverse_monitored_cache:
-                if message.id in self.message_cache:
-                    try:
-                        msg = self.message_cache[message.id]
-                        await msg.delete()
-                        del self.message_cache[message.id]
-                    except Exception as e:
-                        self.logger.error(f"Error deleting message in original channel: {e}")
+            if isinstance(message.channel, discord.Thread) and message.channel.parent_id == self.physbot_dm_forum_id:
+                user_id = staff_utils.get_user_id_from_thread(message.channel)
+                assert user_id is not None, f"Could not extract user ID from thread {message.channel.id} for delete relay."
+                user_channel = self.bot.get_user(user_id)
+                assert user_channel is not None, f"Could not find user with ID {user_id
+                } for relaying delete."
+                success = await staff_utils.delete_relay(user_channel, message.id, self.message_cache)
+                if not success:
+                    await message.channel.send(f"Failed to delete relayed message for deleted message ID {message.id}.")                
     
     async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:
         async with self.lock:
             if before.author.bot:
                 return
-            await self._load_cache()
-            if before.channel in self.monitored_cache:
-                logging_channel = self.monitored_cache[before.channel]
-                embed = staff_utils.send_message_embed(after, discord.colour.Color.yellow(), before=before)
-                await logging_channel.send(embed=embed)
+            if isinstance(before.channel, discord.Thread) and before.channel.parent_id == self.physbot_dm_forum_id:
+                if after.content and after.content.startswith("//"):
+                    return
+                user_id = staff_utils.get_user_id_from_thread(after.channel)
+                assert user_id is not None, f"Could not extract user ID from thread {after.channel.id} for relaying."
+                user_channel = self.bot.get_user(user_id)
+                assert user_channel is not None, f"Could not find user with ID {user_id} for relaying."
+                await staff_utils.relay_content(user_channel, after, self.message_cache, before_message_id=before.id)
                 
-            elif before.channel in self.reverse_monitored_cache:
-                if before.id in self.message_cache:
-                    try:
-                        msg = self.message_cache[before.id]
-                        if after.content and not after.content.startswith("//"):
-                            await msg.edit(content=after.content)
-                            self.message_cache[after.id] = msg
-                    except Exception as e:
-                        self.logger.error(f"Error editing message in original channel: {e}")
-                else:
-                    original_channel = self.reverse_monitored_cache[before.channel]
-                    msg = await original_channel.send(after.content)
-                    self.message_cache[after.id] = msg
+            elif isinstance(before.channel, discord.DMChannel) and before.author.id != self.bot.user.id:
+                forum = self.bot.get_channel(self.physbot_dm_forum_id)
+                if forum:
+                    thread = await staff_utils.get_user_thread(forum, before.author)
+                    if thread:
+                        await staff_utils.relay_content(thread, after, self.message_cache) # Will not pass before_message_id for anti-privacy reasons
+                    else:
+                        self.logger.info(f"Could not find or create thread for user {before.author.id} in forum {self.physbot_dm_forum_id} for relaying edited message.")
                 
     async def on_member_join(self, member: discord.Member) -> None:
         async with self.lock:
@@ -104,66 +99,3 @@ class StaffService:
             await asyncio.sleep(0.1)
         await self.lock.acquire()
 
-    async def monitor(self, channel: Optional[discord.TextChannel], user: Optional[discord.User]) -> str:
-        """Monitor or unmonitor a channel for a user."""
-        async with self.lock:
-            await self._load_cache()
-            if not channel and not user:
-                return staff_utils.list_monitored(self.monitored_cache)
-            try:
-                dm_channel = user and await user.create_dm()
-            except Exception as e:
-                return f"Failed to create DM channel with user {user}: {e}"
-            msg = ""
-            for mon_channel in [channel, dm_channel]:
-                if not mon_channel:
-                    continue
-                if mon_channel in self.monitored_cache:
-                    try:
-                        await self.monitored_cache[mon_channel].delete()
-                    except Exception as e:
-                        self.logger.warning(f"Error deleting logging channel for {mon_channel}: {e}")
-                    
-                    del self.reverse_monitored_cache[self.monitored_cache[mon_channel]]
-                    del self.monitored_cache[mon_channel]
-                    msg += f"Stopped monitoring channel {mon_channel}.\n"
-                else:
-                    phods = self.bot.get_guild(config.phods)
-                    category = phods.get_channel(config.category)
-                    logging_channel = await phods.create_text_channel(
-                        name=f"view-{mon_channel}", category=category,
-                    )
-                    self.monitored_cache[mon_channel] = logging_channel
-                    self.reverse_monitored_cache[logging_channel] = mon_channel
-                    await self.logger.info(f"Started monitoring channel {mon_channel} with key {logging_channel.id}.")
-                    msg += f"Now monitoring channel {mon_channel}.\n"
-                    
-            staff_utils.save_cache(self.monitored_cache, self.gss["monitoring"])
-            return msg
-
-    async def _load_cache(self) -> None:
-        if self.monitored_cache is not None:
-            return
-        self.monitored_cache = {}
-        self.reverse_monitored_cache = {}
-        data = self.gss["monitoring"].get_data()
-        for row in data:
-            if len(row) < 2:
-                continue
-            channel_id, key = row[0], row[1]
-            channel = self.bot.get_channel(int(channel_id))
-            logging_channel = self.bot.get_channel(int(key))
-            if not logging_channel:
-                try:
-                    logging_channel = await self.bot.fetch_channel(int(key))
-                except Exception as e:
-                    self.logger.error(f"Error fetching logging channel {key}: {e}")
-                    continue
-            if not channel:
-                try:
-                    channel = await self.bot.fetch_channel(int(channel_id))
-                except Exception as e:
-                    self.logger.error(f"Error fetching channel {channel_id}: {e}")
-                    continue
-            self.monitored_cache[channel] = logging_channel
-            self.reverse_monitored_cache[logging_channel] = channel
