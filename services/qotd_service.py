@@ -743,6 +743,7 @@ class QotdService:
             creator=main_sheet[qotd_num, COLUMN["creator"]],
             base=stats.base,
             weighted_solves=stats.weight_solves,
+            total_unique_attempters=stats.total_unique_attempters,
             solves_official=stats.total_solves,
             total_attempts=stats.total_attempts,
         )

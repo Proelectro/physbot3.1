@@ -141,26 +141,33 @@ def create_submission_embed(
     return embed
 
 
+import discord
+
 def get_statistics_embed(
     num: int,
     creator: str,
-    base=A1 + B1,
-    total_unique_attempters=0,
-    weighted_solves=0,
-    solves_official=0,
-    total_attempts=0,
+    base: float,
+    total_unique_attempters: int = 0,
+    weighted_solves: float = 0,
+    solves_official: int = 0,
+    total_attempts: int = 0,
 ) -> discord.Embed:
     embed = discord.Embed(
         title=f"Statistics for QoTD {num}\nLast Updated at {utils.get_time()}",
     )
     embed.set_footer(text=f"Creator: {creator}")
-    embed.add_field(name="Base Points", value=f"{base:.3f}")
-    embed.add_field(
-        name="Weighted Solves", value=f"{weighted_solves:.3f}", inline=False
-    )
-    embed.add_field(name="Solves (official)", value=str(solves_official), inline=True)
-    embed.add_field(name="Total attempts", value=str(total_attempts), inline=False)
-    embed.add_field(name="Total unique attempters", value=str(total_unique_attempters), inline=True)
+
+    # Row 1: Base Points (Full width)
+    embed.add_field(name="Base Points", value=f"{base:.3f}", inline=False)
+
+    # Row 2: Weight and Solves
+    embed.add_field(name="Weighted Solves", value=f"{weighted_solves:.3f}", inline=True)
+    embed.add_field(name="Solves (official)", value=str(solves_official), inline=False)
+
+    # Row 3: Submission and Unique Submitters
+    embed.add_field(name="Total attempts", value=str(total_attempts), inline=True)
+    embed.add_field(name="Total unique attempters", value=str(total_unique_attempters), inline=False)
+
     return embed
 
 
