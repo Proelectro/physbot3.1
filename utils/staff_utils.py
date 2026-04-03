@@ -36,8 +36,12 @@ async def relay_content(destination: discord.abc.Messageable,
         raise ValueError("Attempted to relay an empty message.")
 
     reference_message_id = message.reference and message.reference.message_id
+    print("---------------")
+    print(message.content)
+    print("Reference message ID:", reference_message_id)
     relayed_reference_id = message_cache.get(reference_message_id) if reference_message_id else None
-
+    print("Relayed reference ID:", relayed_reference_id)
+    print("---------------")
     before_relay_id = message_cache.get(before_message_id) if before_message_id else None
         
     if before_relay_id:
@@ -56,6 +60,7 @@ async def relay_content(destination: discord.abc.Messageable,
             ) if relayed_reference_id else None
 )
     message_cache[message.id] = msg.id
+    message_cache[msg.id] = message.id
     return msg
 
 async def delete_relay(destination: discord.abc.Messageable, message_id: int, message_cache: dict[int, int]) -> bool:
@@ -65,7 +70,8 @@ async def delete_relay(destination: discord.abc.Messageable, message_id: int, me
         return False
     try:
         relayed_message = await destination.fetch_message(relayed_id)
-        await relayed_message.delete()
+        await relayed_message.delete() 
+        del message_cache[message_cache.get(message_id)] 
         del message_cache[message_id]
     except discord.NotFound:
         return False

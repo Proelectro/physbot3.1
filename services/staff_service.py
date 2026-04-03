@@ -29,9 +29,10 @@ class StaffService:
                 if message.content and message.content.startswith("//"):
                     return
                 user_id = staff_utils.get_user_id_from_thread(message.channel)
-                assert user_id is not None, f"Could not extract user ID from thread {message.channel.id} for relaying."
-                user_channel = self.bot.get_user(user_id)
-                assert user_channel is not None, f"Could not find user with ID {user_id} for relaying."
+                user = self.bot.get_user(user_id)
+                if user.dm_channel is None:
+                    await user.create_dm()
+                user_channel = user.dm_channel
                 await staff_utils.relay_content(user_channel, message, self.message_cache)
                 
             elif isinstance(message.channel, discord.DMChannel) and message.author.id != self.bot.user.id: 
@@ -47,10 +48,10 @@ class StaffService:
                 return
             if isinstance(message.channel, discord.Thread) and message.channel.parent_id == self.physbot_dm_forum_id:
                 user_id = staff_utils.get_user_id_from_thread(message.channel)
-                assert user_id is not None, f"Could not extract user ID from thread {message.channel.id} for delete relay."
-                user_channel = self.bot.get_user(user_id)
-                assert user_channel is not None, f"Could not find user with ID {user_id
-                } for relaying delete."
+                user = self.bot.get_user(user_id)
+                if user.dm_channel is None:
+                    await user.create_dm()
+                user_channel = user.dm_channel
                 success = await staff_utils.delete_relay(user_channel, message.id, self.message_cache)
                 if not success:
                     await message.channel.send(f"Failed to delete relayed message for deleted message ID {message.id}.")                
@@ -63,9 +64,10 @@ class StaffService:
                 if after.content and after.content.startswith("//"):
                     return
                 user_id = staff_utils.get_user_id_from_thread(after.channel)
-                assert user_id is not None, f"Could not extract user ID from thread {after.channel.id} for relaying."
-                user_channel = self.bot.get_user(user_id)
-                assert user_channel is not None, f"Could not find user with ID {user_id} for relaying."
+                user = self.bot.get_user(user_id)
+                if user.dm_channel is None:
+                    await user.create_dm()
+                user_channel = user.dm_channel
                 await staff_utils.relay_content(user_channel, after, self.message_cache, before_message_id=before.id)
                 
             elif isinstance(before.channel, discord.DMChannel) and before.author.id != self.bot.user.id:
