@@ -146,7 +146,7 @@ import discord
 def get_statistics_embed(
     num: int,
     creator: str,
-    base: float,
+    base: float = A1 + B1,
     num_participants: int = 0,
     weighted_solves: float = 0,
     solves_official: int = 0,
