@@ -32,12 +32,14 @@ class Stats:
         weight_solves: float = 0.0,
         total_solves: int = 0,
         total_attempts: int = 0,
+        total_unique_attempters: int = 0,
         base: Optional[float] = None,
     ):
         self.base = base
         self.weight_solves = weight_solves
         self.total_solves = total_solves
         self.total_attempts = total_attempts
+        self.total_unique_attempters = total_unique_attempters
 
     def calc_base(self):
         self.base = A1 * np.exp(a1 * self.weight_solves) + B1 * np.exp(
@@ -64,6 +66,7 @@ def get_stats(qotd_sheet: LocalSheet, correct_ans: str, tolerance: str):
     stats = Stats()
     for user, *submissions in qotd_sheet.get_data():
         stats.total_attempts += len(submissions)
+        stats.total_unique_attempters += 1
         attempts = 0
         for his_ans in submissions:
             if is_correct_answer(float(correct_ans), float(his_ans), float(tolerance)):
@@ -142,6 +145,7 @@ def get_statistics_embed(
     num: int,
     creator: str,
     base=A1 + B1,
+    total_unique_attempters=0,
     weighted_solves=0,
     solves_official=0,
     total_attempts=0,
@@ -152,10 +156,11 @@ def get_statistics_embed(
     embed.set_footer(text=f"Creator: {creator}")
     embed.add_field(name="Base Points", value=f"{base:.3f}")
     embed.add_field(
-        name="Weighted Solves", value=f"{weighted_solves:.3f}", inline=False
+        name="Weighted Solves", value=f"{weighted_solves:.3f}", inline=True
     )
     embed.add_field(name="Solves (official)", value=str(solves_official), inline=False)
-    embed.add_field(name="Total attempts", value=str(total_attempts), inline=False)
+    embed.add_field(name="Total attempts", value=str(total_attempts), inline=True)
+    embed.add_field(name="Total unique attempters", value=str(total_unique_attempters), inline=False)
     return embed
 
 
