@@ -50,8 +50,11 @@ async def relay_content(destination: discord.abc.Messageable,
             content=content,
             files=files,
             stickers=stickers,
-            reference=discord.MessageReference(message_id=relayed_reference_id) if relayed_reference_id else None
-        )
+            reference=discord.MessageReference(
+                message_id=relayed_reference_id, 
+                channel_id=destination.id  # <--- Added this
+            ) if relayed_reference_id else None
+)
     message_cache[message.id] = msg.id
     return msg
 
