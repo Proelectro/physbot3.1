@@ -156,11 +156,11 @@ def get_statistics_embed(
     embed.set_footer(text=f"Creator: {creator}")
     embed.add_field(name="Base Points", value=f"{base:.3f}")
     embed.add_field(
-        name="Weighted Solves", value=f"{weighted_solves:.3f}", inline=True
+        name="Weighted Solves", value=f"{weighted_solves:.3f}", inline=False
     )
-    embed.add_field(name="Solves (official)", value=str(solves_official), inline=False)
-    embed.add_field(name="Total attempts", value=str(total_attempts), inline=True)
-    embed.add_field(name="Total unique attempters", value=str(total_unique_attempters), inline=False)
+    embed.add_field(name="Solves (official)", value=str(solves_official), inline=True)
+    embed.add_field(name="Total attempts", value=str(total_attempts), inline=False)
+    embed.add_field(name="Total unique attempters", value=str(total_unique_attempters), inline=True)
     return embed
 
 
