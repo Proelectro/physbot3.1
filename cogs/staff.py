@@ -75,15 +75,7 @@ class Staff(Cog):
             )
             await interaction.response.send_message(str(error), ephemeral=True)
 
-    # Commands
 
-    @group.command(name="monitor", description="To monitor/ unmonitor a channel")
-    @requires_permission(Permission.STAFF)
-    async def monitor(self, interaction: discord.Interaction, channel_: Optional[discord.TextChannel] = None, user_: Optional[discord.User] = None):
-        await interaction.response.defer()
-        msg = await self.staff_service.monitor(channel_, user_)
-        await interaction.followup.send(msg)
-        
     @group.command(
         name="clear_cache", description="Restricted to the owner only (proelectro)."
     )
