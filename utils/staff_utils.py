@@ -36,12 +36,7 @@ async def relay_content(destination: discord.abc.Messageable,
         raise ValueError("Attempted to relay an empty message.")
 
     reference_message_id = message.reference and message.reference.message_id
-    print("---------------")
-    print(message.content)
-    print("Reference message ID:", reference_message_id)
     relayed_reference_id = message_cache.get(reference_message_id) if reference_message_id else None
-    print("Relayed reference ID:", relayed_reference_id)
-    print("---------------")
     before_relay_id = message_cache.get(before_message_id) if before_message_id else None
         
     if before_relay_id:
