@@ -123,7 +123,10 @@ class Qotd(Cog):
     async def solution(self, interaction: discord.Interaction, num: int):
         await interaction.response.defer()
         msg, file = await self.qotd_service.solution(num)
-        await interaction.followup.send(msg, file=file)
+        if file:
+            await interaction.followup.send(msg, file=file)
+        else:
+            await interaction.followup.send(msg)
 
     @group.command(
         name="update_solution", description="Update the solution for a specific QOTD."
@@ -134,7 +137,7 @@ class Qotd(Cog):
     ):
         await interaction.response.defer()
         result, file = await self.qotd_service.solution(num, solution)
-        await interaction.followup.send(result, file=file)
+        await interaction.followup.send(result)
 
     @group.command(
         name="submit",
