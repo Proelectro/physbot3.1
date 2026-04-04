@@ -122,21 +122,19 @@ class Qotd(Cog):
     @requires_permission(Permission.EVERYONE)
     async def solution(self, interaction: discord.Interaction, num: int):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
-        result = await self.qotd_service.solution(num)
-        await interaction.followup.send(result)
+        msg, file = await self.qotd_service.solution(num)
+        await interaction.followup.send(msg, file=file)
 
     @group.command(
         name="update_solution", description="Update the solution for a specific QOTD."
     )
     @requires_permission(Permission.QOTD_CREATOR)
     async def update_solution(
-        self, interaction: discord.Interaction, num: int, link: str
+        self, interaction: discord.Interaction, num: int, solution: discord.Attachment
     ):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
-        result = await self.qotd_service.solution(num, link)
-        await interaction.followup.send(result)
+        result, file = await self.qotd_service.solution(num, solution)
+        await interaction.followup.send(result, file=file)
 
     @group.command(
         name="submit",

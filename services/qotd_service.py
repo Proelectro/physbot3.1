@@ -254,24 +254,25 @@ class QotdService:
             )
             return True
 
-    async def solution(self, qotd_num: int, link: str = "") -> str:
+    async def solution(self, qotd_num: int, solution: Optional[discord.Attachment] = None) -> Tuple[str, discord.File | discord.utils.MISSING]:
         async with self.lock:
             main_sheet = self.gss["Sheet1"]
             if qotd_num < 1 or qotd_num >= len(main_sheet.get_data()):
                 await self.logger.warning(f"Invalid QOTD number: {qotd_num}")
-                return "Invalid QOTD number"
-            if link:
-                await self.logger.info(f"Updating solution link for QOTD {qotd_num}")
-                main_sheet[qotd_num, COLUMN["solution"]] = link
+                return "Invalid QOTD number", discord.utils.MISSING
+            if solution:
+                await self.logger.info(f"Updating solution for QOTD {qotd_num}")
+                solution_file_path = await utils.upload_image("qotd_images", qotd_num, solution, self.logger) 
+                main_sheet[qotd_num, COLUMN["solution"]] = solution_file_path
                 main_sheet.commit()
-                await self.logger.info("Solution link updated successfully")
-                return "Solution link updated successfully"
+                await self.logger.info("Solution updated successfully")
+                return "Solution updated successfully", discord.utils.MISSING
             else:
                 if main_sheet[qotd_num, COLUMN["status"]] in ["done", "active"]:
                     await self.logger.info(f"Fetching solution for QOTD {qotd_num}")
                     qotd_creator = main_sheet[qotd_num, COLUMN["creator"]]
                     source = main_sheet[qotd_num, COLUMN["source"]]
-                    solution = main_sheet[qotd_num, COLUMN["solution"]]
+                    solution_file_path = main_sheet[qotd_num, COLUMN["solution"]]
                     answer = main_sheet[qotd_num, COLUMN["answer"]]
                     tolerance = main_sheet[qotd_num, COLUMN["tolerance"]]
                     post = (
@@ -279,14 +280,15 @@ class QotdService:
                         + f"QOTD Creator: **{qotd_creator}**\n"
                         + f"Answer: {answer}   Tolerance: {tolerance}\n"
                         + f"Source: {source}\n"
-                        + f"{solution}"
                     )
-                    return post
+                    if not solution_file_path:
+                        post +=f"Please ask @{qotd_creator} to upload the solution"                
+                    return post, discord.File(solution_file_path) if solution_file_path else discord.utils.MISSING
                 else:
                     await self.logger.warning(
                         f"Solution not available for QOTD {qotd_num}"
                     )
-                    return "Solution not available yet"
+                    return "Question has not been completed yet", discord.utils.MISSING
 
     async def submit(
         self, interaction: discord.Interaction, qotd_num: Optional[int], answer: str
