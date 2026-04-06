@@ -26,6 +26,38 @@ class Miscellaneous(Cog):
             return False
 
     @app_commands.command(
+        name="message", description="To message/dm someone through bot"
+    )
+    async def message(
+        self, interaction: discord.Interaction, id: str, text: str, reply: str = None
+    ):
+        if interaction.user.id not in (config.proelectro, config.dq):
+            await interaction.response.send_message(
+                f"This command can only be used by owner of the bot.", ephemeral=True
+            )
+        else:
+            try:
+                channel = self.bot.get_channel(int(id))
+                if not channel:
+                    channel = await self.bot.fetch_user(int(id))
+                if reply:
+                    msg = await channel.send(
+                        text, reference=await channel.fetch_message(int(reply))
+                    )
+                else:
+                    msg = await channel.send(text)
+            except Exception as e:
+                await interaction.response.send_message(str(e))
+            else:
+                embed = discord.Embed(
+                    title=str(interaction.user), color=config.blue, description=text
+                )
+                embed.set_thumbnail(url=interaction.user.display_avatar.url)
+                embed.add_field(name="UserId/ChannelID:", value=str(id), inline=False)
+                embed.add_field(name="MessageId:", value=str(msg.id), inline=False)
+                await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(
         name="attachment_link", description="Converts attachment to link."
     )
     async def attachment_link(

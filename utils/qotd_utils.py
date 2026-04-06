@@ -157,17 +157,11 @@ def get_statistics_embed(
     )
     embed.set_footer(text=f"Creator: {creator}")
 
-    # Row 1: Base Points (Full width)
-    embed.add_field(name="Base Points", value=f"{base:.3f}", inline=False)
-
-    # Row 2: Weight and Solves
+    embed.add_field(name="Base Points", value=f"{base:.3f}", inline=True)
     embed.add_field(name="Weighted Solves", value=f"{weighted_solves:.3f}", inline=True)
-    embed.add_field(name="\u200b", value="\u200b", inline=True)
     embed.add_field(name="Solves (official)", value=str(solves_official), inline=True)
     
-    # Row 3: Submission and Unique Submitters
     embed.add_field(name="Total attempts", value=str(total_attempts), inline=True)
-    embed.add_field(name="\u200b", value="\u200b", inline=True)
     embed.add_field(name="No. Participants", value=str(num_participants), inline=True)
 
     return embed
