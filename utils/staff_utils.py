@@ -30,11 +30,14 @@ async def relay_content(destination: discord.abc.Messageable,
     """
     files = await prepare_relay_files(message)
     stickers = message.stickers or []
-    content = f"{message.content}".strip()
+    content = message.content.strip()
     embeds = message.embeds or []
+    for snapshot in message.message_snapshots:
+        content += "\n" + snapshot.content.strip()
+        embeds.extend(snapshot.embeds)
     
-    # if not content and not files and not stickers and not embeds:
-    #     raise ValueError("Attempted to relay an empty message.")
+    if not content and not files and not stickers and not embeds:
+        raise ValueError("Attempted to relay an empty message.")
 
     reference_message_id = message.reference and message.reference.message_id
     relayed_reference_id = message_cache.get(reference_message_id) if reference_message_id else None
