@@ -31,6 +31,7 @@ async def relay_content(destination: discord.abc.Messageable,
     files = await prepare_relay_files(message)
     stickers = message.stickers or []
     content = f"{message.content}".strip()
+    embeds = message.embeds or []
     
     if not content and not files and not stickers:
         raise ValueError("Attempted to relay an empty message.")
@@ -43,12 +44,15 @@ async def relay_content(destination: discord.abc.Messageable,
         before_relayed_message = await destination.fetch_message(before_relay_id)
         msg = await before_relayed_message.edit(
             content=content,
+            embeds=embeds,
+            attachments=files,
         )
     else:
         msg = await destination.send(
             content=content,
             files=files,
             stickers=stickers,
+            embeds=embeds,
             reference=discord.MessageReference(
                 message_id=relayed_reference_id, 
                 channel_id=destination.id  # <--- Added this
