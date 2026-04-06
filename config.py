@@ -2,7 +2,6 @@ cogs = [
     "cogs.staff",
     "cogs.qotd",
     "cogs.potd",
-    "cogs.messages",
     "cogs.miscellaneous",
 ]
 log_important = 1019451650504663100
