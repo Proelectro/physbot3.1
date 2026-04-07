@@ -51,7 +51,8 @@ class Staff(Cog):
             return        
         await self.staff_service.on_message_delete(message)   
 
-    @Cog.listener() 
+    @Cog.listener()
+    @catch_errors 
     async def on_member_join(self, member: discord.Member):
         await self.staff_service.on_member_join(member)
 
