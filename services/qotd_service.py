@@ -502,6 +502,10 @@ class QotdService:
         phods = self.bot.get_guild(config.phods)
         assert phods, "PHODS guild not found"
         member = phods.get_member(user.id)
+        if member and member.get_role(config.qotd_banned):
+            await self.logger.warning(f"Banned user {user.id} attempted to submit an answer")
+            await interaction.followup.send("You are banned from submitting answers for QOTD.")
+            return False
         if (
             main_sheet[qotd_num, COLUMN["status"]] == "live"
             and member
@@ -705,16 +709,21 @@ class QotdService:
             season=season,
             time=time,
         )
+        phods = self.bot.get_guild(config.phods)
+        assert phods, "PHODS guild not found"
+        qotd_banned_role = phods.get_role(config.qotd_banned)
+        assert qotd_banned_role, "QOTD Banned role not found"
+        qotd_banned_members = set(member.id for member in qotd_banned_role.members)
 
         total_scores = {
-            user: float(score) for user, score in self.gss["Leaderboard"].get_data()
+            user: float(score) for user, score in self.gss["Leaderboard"].get_data() if int(user) not in qotd_banned_members
         }
         for num in range(1, len(main_sheet.get_data())):
             if main_sheet[num, COLUMN["status"]] in ["active", "live"]:
                 ans = main_sheet[num, COLUMN["answer"]]
                 tolerance = main_sheet[num, COLUMN["tolerance"]]
                 qotd_sheet = self.gss[f"qotd {num}"]
-                scores, stats = grade(qotd_sheet, ans, tolerance)
+                scores, stats = grade(qotd_sheet, ans, tolerance, qotd_banned_members)
                 for user, points in scores.items():
                     total_scores[user] = total_scores.get(user, 0.0) + points
 

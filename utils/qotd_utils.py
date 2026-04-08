@@ -89,11 +89,12 @@ def get_score(submissions: list[str], correct_ans: str, tolerance: str, stats: S
     return 0
 
 
-def grade(qotd_sheet: LocalSheet, correct_ans: str, tolerance: str):
+def grade(qotd_sheet: LocalSheet, correct_ans: str, tolerance: str, qotd_banned_members: set[int]):
     stats = get_stats(qotd_sheet, correct_ans, tolerance)
     scores = {
         user: get_score(sub, correct_ans, tolerance, stats)
         for user, *sub in qotd_sheet.get_data()
+        if int(user) not in qotd_banned_members
     }
     return scores, stats
 
