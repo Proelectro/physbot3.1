@@ -623,7 +623,7 @@ class QotdService:
         )
         main_sheet[qotd_num_to_post, COLUMN["leaderboard"]] = str(leaderboard_msg.id)
         main_sheet.commit()
-        # await self._prune_logs()
+        await self._prune_logs()
         await self.logger.info("Daily question processing completed")
 
     async def _prune_logs(self):
@@ -683,6 +683,7 @@ class QotdService:
                 await utils.remove_roles(
                     self.bot.get_guild(config.phods).get_role(config.qotd_solver)
                 )
+                await self._prune_logs()
                 await self.logger.info(
                     f"Ended season with {len(active_and_live)} QOTDs"
                 )

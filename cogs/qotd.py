@@ -469,7 +469,6 @@ class Qotd(Cog):
     @requires_permission(Permission.PROELECTRO)
     async def end_season(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         msg = await self.qotd_service.end_season()
         await interaction.followup.send(msg)
         await self.logger.warning("Season ended by proelectro")
