@@ -676,7 +676,7 @@ class QotdService:
                 self.gss["Leaderboard"].commit()
                 data_sheet = self.gss["data"]
                 data_sheet[1, 2] = str(int(data_sheet[1, 2]) + 1)
-                data_sheet[1, 3] = "live"
+                data_sheet[1, 3] = "done"
                 data_sheet[1, 1] = "0"
                 data_sheet.commit()
                 await self.logger.info("Data sheet updated for new season")
