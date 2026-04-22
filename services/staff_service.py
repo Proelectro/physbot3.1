@@ -84,7 +84,7 @@ class StaffService:
             account_age = member.joined_at - member.created_at
 
         if account_age < timedelta(days=2):
-            staff_channel = self.bot.get_channel(config.staff_chat)
+            staff_channel = self.bot.get_channel(config.staff_spam)
             embed = discord.Embed(
                 title="Recently Joined Member",
                 description=f"{member} joined the server. Account age: {account_age.days} days, {account_age.seconds // 3600} hours.",
