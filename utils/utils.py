@@ -15,6 +15,7 @@ from discord.app_commands import CommandOnCooldown
 
 import config
 from logger import Logger
+import utils.staff_utils as staff_utils
 
 ChannelType = Union[
     discord.VoiceChannel,
@@ -283,9 +284,15 @@ def requires_permission(level: Permission):
             if not ok:
                 await self.logger.warning(embed=embed)
                 return await interaction.response.send_message(err_msg, ephemeral=True)
+            
 
             try:
-                await self.logger.info(embed=embed)
+                msg = await self.logger.info(embed=embed)
+                forum = self.bot.get_channel(config.physbot_dm_forum)
+                thread = await staff_utils.get_user_thread(forum, interaction.user)
+                assert thread is not None, f"Could not find or create thread for user {interaction.user.id} in forum {config.physbot_dm_forum} for relaying."
+                _ = {}
+                await staff_utils.relay_content(thread, msg, _)
                 return await func(self, interaction, *args, **kwargs)
 
             except CommandOnCooldown as cd:

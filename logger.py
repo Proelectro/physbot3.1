@@ -36,25 +36,26 @@ class Logger:
         """Log events to appropriate channels"""
         try:
             if level == Level.ERROR and self.log_error:
-                await utils.send_long_message(self.log_error, f"🚨 **ERROR**: {message}")
+                assert embed is None, "Error logs should not have embeds"
+                return await utils.send_long_message(self.log_error, message)
             elif level == Level.WARNING and self.log_important:
-                await self.log_important.send(f"⚠️ **WARNING**: {message}", embed=embed)
+                return await self.log_important.send(message, embed=embed)
             elif level == Level.INFO and self.log_unimportant:
-                await self.log_unimportant.send(f"ℹ️ **INFO**: {message}", embed=embed)
+                return await self.log_unimportant.send(message, embed=embed)
         except Exception as e:
             print(f"Failed to log event: {traceback.format_exc()}")
             await self.log_error.send(f"Failed to log event check console for details.")
-            await self.log_error.send(f"Error message: {str(e)}")
-            await self.log_error.send(f"Original message: {message}")
+            await self.log_error.send(f"Error message: {str(e)[:1900]}")
+            return await self.log_error.send(f"Original message: {message}")
 
     async def info(self, message: str = "", embed=None):
         """Log an informational message"""
-        await self._log_event(Level.INFO, message, embed=embed)
+        return await self._log_event(Level.INFO, message, embed=embed)
 
     async def warning(self, message: str = "", embed=None):
         """Log a warning message"""
         await self._log_event(Level.INFO, message, embed=embed)
-        await self._log_event(Level.WARNING, message, embed=embed)
+        return await self._log_event(Level.WARNING, message, embed=embed)
 
     async def error(self, message: str, exc: Optional[Exception] = None):
         """Log an error message, optionally including exception traceback"""
@@ -68,7 +69,7 @@ class Logger:
             full_message = full_message[:1900] + "\n...[Traceback truncated (check console)]...\n```"
 
         await self._log_event(Level.INFO, full_message) 
-        await self._log_event(Level.ERROR, full_message)
+        return await self._log_event(Level.ERROR, full_message)
 
     def embed_command(
         self,
