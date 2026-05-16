@@ -436,11 +436,17 @@ class PotdService:
         if potd_num_to_post is None:
             await self.logger.warning("No POTD available to post")
             potd_planning = self.bot.get_channel(config.potd_planning)
+            
+            self.live_potd = self._get_live_potd_num()
+            main_sheet[self.live_potd, COLUMN["status"]] = "active"
+            self.live_potd = None
+            main_sheet.commit()
+            
             assert isinstance(
                 potd_planning, discord.TextChannel
             ), "POTD Creator channel not found"
             await potd_planning.send(
-                f"<@&{config.potd_creator}> Toggle is on but no POTD is available to post. Previous POTD is still live."
+                f"<@&{config.potd_creator}> Toggle is on but no POTD is available to post. Previous POTD is not live ask Proelectro if you want to make it live again."
             )
             return
 
