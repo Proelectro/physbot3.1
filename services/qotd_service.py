@@ -549,11 +549,17 @@ class QotdService:
         if qotd_num_to_post is None:
             await self.logger.warning("No QOTD available to post")
             qotd_planning = self.bot.get_channel(config.qotd_planning)
+            
+            self.live_qotd = self._get_live_qotd_num()
+            main_sheet[self.live_qotd, COLUMN["status"]] = "active"
+            self.live_qotd = None
+            main_sheet.commit()
+            
             assert isinstance(
                 qotd_planning, discord.TextChannel
             ), "QOTD Creator channel not found"
             await qotd_planning.send(
-                f"<@&{config.qotd_creator}> Toggle is on but no QOTD is available to post. Previous Qotd is still live."
+                f"<@&{config.qotd_creator}> Toggle is on but no QOTD is available to post. Previous Qotd is not live ask Proelectro if you want to make it live again."
             )
             return
 
@@ -647,9 +653,8 @@ class QotdService:
                 stats = get_stats(qotd_sheet, ans, tolerance)
                 for user, *sub in qotd_sheet.get_data():
                     if user == user_id:
-                        scores.append(
-                            (f"Qotd {num}", get_score(sub, ans, tolerance, stats))
-                        )
+                        score, attempts = get_score(sub, ans, tolerance, stats)
+                        scores.append((f"Qotd {num}", score, attempts + 1))
         scores.append(("Total", sum(k[1] for k in scores)))
         return scores
 

@@ -84,15 +84,15 @@ def get_score(submissions: list[str], correct_ans: str, tolerance: str, stats: S
     for his_ans in submissions:
         if is_correct_answer(float(correct_ans), float(his_ans), float(tolerance)):
             if attempts <= 5:
-                return stats.get_score(attempts)
+                return stats.get_score(attempts), attempts
         attempts += 1
-    return 0
+    return 0, attempts
 
 
 def grade(qotd_sheet: LocalSheet, correct_ans: str, tolerance: str, qotd_banned_members: set[int]):
     stats = get_stats(qotd_sheet, correct_ans, tolerance)
     scores = {
-        user: get_score(sub, correct_ans, tolerance, stats)
+        user: get_score(sub, correct_ans, tolerance, stats)[0]
         for user, *sub in qotd_sheet.get_data()
         if int(user) not in qotd_banned_members
     }
@@ -100,14 +100,14 @@ def grade(qotd_sheet: LocalSheet, correct_ans: str, tolerance: str, qotd_banned_
 
 
 def create_scores_embed(
-    username: str, scores: list[tuple[str, float]]
+    username: str, scores: list[tuple[str, float, int]]
 ) -> discord.Embed:
     embed = discord.Embed(
         title=f"🏆 Scores Card {username}", color=discord.Color.gold()
     )
 
-    for name, score in scores:
-        embed.add_field(name=name, value=f"{score:.3f}", inline=False)
+    for name, score, attempts in scores:
+        embed.add_field(name=name, value=f"{score:.3f} ({attempts} attempts)", inline=False)
     return embed
 
 
