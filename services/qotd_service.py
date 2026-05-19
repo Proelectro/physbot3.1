@@ -247,7 +247,7 @@ class QotdService:
                 num=self.gss["Sheet1"][qotd_num, COLUMN["qotd_num"]],
                 date=self.gss["Sheet1"][qotd_num, COLUMN["date"]],
                 day=self.gss["Sheet1"][qotd_num, COLUMN["day"]],
-                links=self.gss["Sheet1"][qotd_num, COLUMN["question path"]],
+                file_path=self.gss["Sheet1"][qotd_num, COLUMN["question path"]],
                 creator=self.gss["Sheet1"][qotd_num, COLUMN["creator"]],
                 difficulty=self.gss["Sheet1"][qotd_num, COLUMN["difficulty"]],
                 topic=self.gss["Sheet1"][qotd_num, COLUMN["topic"]],
@@ -655,7 +655,7 @@ class QotdService:
                     if user == user_id:
                         score, attempts = get_score(sub, ans, tolerance, stats)
                         scores.append((f"Qotd {num}", score, attempts + 1))
-        scores.append(("Total", sum(k[1] for k in scores)))
+        scores.append(("Total", sum(k[1] for k in scores), sum(k[2] for k in scores)))
         return scores
 
     async def end_season(self) -> None:

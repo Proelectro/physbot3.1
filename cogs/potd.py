@@ -80,7 +80,6 @@ class Potd(Cog):
     @requires_permission(Permission.EVERYONE)
     async def fetch(self, interaction: discord.Interaction, num: int):
         await interaction.response.defer()
-        return await interaction.followup.send("This command is not implemented yet. Please ask Proelectro to implement it.")
         sc = await self.potd_service.fetch(interaction.channel, num)
         if sc:
             await interaction.followup.send(

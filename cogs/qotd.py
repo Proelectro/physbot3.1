@@ -102,7 +102,6 @@ class Qotd(Cog):
     @requires_permission(Permission.EVERYONE)
     async def fetch(self, interaction: discord.Interaction, num: int):
         await interaction.response.defer(ephemeral=True)
-        return await interaction.followup.send("This command is not yet implemented. Please ask Proelectro to implement it.")
         sc = await self.qotd_service.fetch(interaction.channel, num)
         if sc:
             await interaction.followup.send(
