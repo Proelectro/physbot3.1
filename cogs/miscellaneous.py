@@ -5,6 +5,7 @@ from discord import app_commands
 import config
 from threading import Thread
 from utils.utils import requires_permission, Permission
+from logger import Logger
 
 Cog = commands.Cog
 
@@ -12,6 +13,7 @@ Cog = commands.Cog
 class Miscellaneous(Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.logger = Logger(bot)
 
     @app_commands.command()
     @requires_permission(Permission.STAFF)
