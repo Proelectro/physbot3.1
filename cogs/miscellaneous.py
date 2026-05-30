@@ -27,11 +27,12 @@ class Miscellaneous(Cog):
     @app_commands.command(
         name="message", description="To message/dm someone through bot"
     )
-    @requires_permission(Permission.PROELECTRO)
+    @requires_permission(Permission.STAFF)
     async def message(
         self, interaction: discord.Interaction, id: str, text: str, reply: str = None
     ):
         try:
+            await interaction.response.defer(emphemeral=True)
             channel = self.bot.get_channel(int(id))
             if not channel:
                 channel = await self.bot.fetch_user(int(id))
@@ -42,22 +43,38 @@ class Miscellaneous(Cog):
             else:
                 msg = await channel.send(text)
         except Exception as e:
-            await interaction.response.send_message(str(e))
+            await interaction.followup.send(f"An error occurred: {e}")
         else:
-            embed = discord.Embed(
-                title=str(interaction.user), color=config.blue, description=text
-            )
-            embed.set_thumbnail(url=interaction.user.display_avatar.url)
-            embed.add_field(name="UserId/ChannelID:", value=str(id), inline=False)
-            embed.add_field(name="MessageId:", value=str(msg.id), inline=False)
-            await interaction.response.send_message(embed=embed)
+            await interaction.followup.send(f"Message sent successfully.")
+            return True
+            
+    @app_commands.command(
+        name="edit_message", description="To edit a message sent by the bot"
+    )
+    @requires_permission(Permission.STAFF)
+    async def edit_message(self, interaction: discord.Interaction, channel_id: int, message_id: int, new_content: str):
+        await interaction.response.defer(emphemeral=True)
+        channel = self.bot.get_channel(channel_id)
+        if not channel:
+            channel = await self.bot.fetch_user(channel_id)
+        try:
+            msg = await channel.fetch_message(message_id)
+            await msg.edit(content=new_content)
+        except Exception as e:
+            self.logger.error(f"Failed to edit message {message_id} in channel {channel_id}: {e}")
+            return False
+        else:
+            await interaction.followup.send(f"Message edited successfully.")
+            return True
+    
 
     @app_commands.command(name="helper", description="To ping helpers.")
     @app_commands.checks.cooldown(1, 30 * 60)
     @requires_permission(Permission.EVERYONE)
     async def helper(self, interaction: discord.Interaction):
         phods = self.bot.get_guild(config.phods)
-        await interaction.response.send_message(phods.get_role(config.helper).mention)
+        await interaction.response.defer()
+        await interaction.followup.send(phods.get_role(config.helper).mention)
         return True
 
     @app_commands.command(name="resources", description="See resources")
@@ -68,7 +85,8 @@ class Miscellaneous(Cog):
             colour=config.green,
             description="[A Comprehensive List of Physics Olympiad Resources](https://artofproblemsolving.com/community/c164h2094716_a_comprehensive_list_of_physics_olympiad_resources)\n[Various Textbooks and Solutions](https://discordapp.com/channels/601528888908185655/601884131005169743/707334765673447454)",
         )
-        await interaction.response.send_message(embed=resources)
+        await interaction.response.defer()
+        await interaction.followup.send(embed=resources)
 
     @app_commands.command(name="help", description="To know about the commands.")
     @requires_permission(Permission.EVERYONE)
@@ -93,7 +111,8 @@ class Miscellaneous(Cog):
             value="/qotd fetch <num> -> Bring the qotd of that number\n/qotd solution <num> -> Bring the solution of that qotd of that number\n/qotd submit <num> <answer> -> to submit your soln of the live qotd. (If you want to get on the leaderboard)",
             inline=False,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.defer()
+        await interaction.followup.send(embed=embed, ephemeral=True)
         return True
 
     @helper.error
@@ -101,7 +120,8 @@ class Miscellaneous(Cog):
         self, interaction: discord.Interaction, error: app_commands.AppCommandError
     ):
         if isinstance(error, app_commands.CommandOnCooldown):
-            await interaction.response.send_message(str(error), ephemeral=True)
+            await interaction.response.defer()
+            await interaction.followup.send(str(error), ephemeral=True)
 
     async def cog_app_command_error(
         self,
