@@ -32,7 +32,7 @@ class Miscellaneous(Cog):
         self, interaction: discord.Interaction, id: str, text: str, reply: str = None
     ):
         try:
-            await interaction.response.defer(emphemeral=True)
+            await interaction.response.defer(ephemeral=True)
             channel = self.bot.get_channel(int(id))
             if not channel:
                 channel = await self.bot.fetch_user(int(id))
@@ -53,7 +53,7 @@ class Miscellaneous(Cog):
     )
     @requires_permission(Permission.STAFF)
     async def edit_message(self, interaction: discord.Interaction, channel_id: int, message_id: int, new_content: str):
-        await interaction.response.defer(emphemeral=True)
+        await interaction.response.defer(ephemeral=True)
         channel = self.bot.get_channel(channel_id)
         if not channel:
             channel = await self.bot.fetch_user(channel_id)
