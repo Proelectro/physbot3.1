@@ -52,13 +52,13 @@ class Miscellaneous(Cog):
         name="edit_message", description="To edit a message sent by the bot"
     )
     @requires_permission(Permission.STAFF)
-    async def edit_message(self, interaction: discord.Interaction, channel_id: int, message_id: int, new_content: str):
+    async def edit_message(self, interaction: discord.Interaction, channel_id: str, message_id: str, new_content: str):
         await interaction.response.defer(ephemeral=True)
-        channel = self.bot.get_channel(channel_id)
+        channel = self.bot.get_channel(int(channel_id))
         if not channel:
-            channel = await self.bot.fetch_user(channel_id)
+            channel = await self.bot.fetch_user(int(channel_id))
         try:
-            msg = await channel.fetch_message(message_id)
+            msg = await channel.fetch_message(int(message_id))
             await msg.edit(content=new_content)
         except Exception as e:
             self.logger.error(f"Failed to edit message {message_id} in channel {channel_id}: {e}")
