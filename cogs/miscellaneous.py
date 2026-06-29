@@ -29,11 +29,14 @@ class Miscellaneous(Cog):
     )
     @requires_permission(Permission.STAFF)
     async def message(
-        self, interaction: discord.Interaction, id: str, text: str, reply: str = None
+        self, interaction: discord.Interaction, text: str, id: str = None, reply: str = None
     ):
         try:
             await interaction.response.defer(ephemeral=True)
-            channel = self.bot.get_channel(int(id))
+            if id is None:
+                channel = interaction.channel
+            else:
+                channel = self.bot.get_channel(int(id))
             if not channel:
                 channel = await self.bot.fetch_user(int(id))
             if reply:
