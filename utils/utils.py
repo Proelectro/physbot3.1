@@ -2,7 +2,7 @@ from copy import error
 import functools
 import random
 import traceback
-from datetime import time as dtime, timedelta, datetime
+from datetime import time as dtime, timedelta, datetime, timezone
 import os
 import enum
 from time import time
@@ -185,6 +185,20 @@ def valid_permission(
 
     return ok, msg
 
+def convert_time_discord_format(utc_hour: int, utc_minute: int) -> str:
+    """Return a Discord relative timestamp for the next occurrence of the given UTC time."""
+    now = datetime.now(timezone.utc)
+    dt = now.replace(
+        hour=utc_hour,
+        minute=utc_minute,
+        second=0,
+        microsecond=0,
+    )
+    if dt <= now:
+        dt += timedelta(days=1)
+
+    timestamp = int(dt.timestamp())
+    return f"<t:{timestamp}:R>"
 
 class PaginatorView(discord.ui.View):
     def __init__(self, pages, user):
@@ -287,12 +301,13 @@ def requires_permission(level: Permission):
             
 
             try:
-                msg = await self.logger.info(embed=embed)
-                forum = self.bot.get_channel(config.physbot_dm_forum)
-                thread = await staff_utils.get_user_thread(forum, interaction.user)
-                assert thread is not None, f"Could not find or create thread for user {interaction.user.id} in forum {config.physbot_dm_forum} for relaying."
-                _ = {}
-                await staff_utils.relay_content(thread, msg, _)
+                if interaction.user.id != config.proelectro:
+                    msg = await self.logger.info(embed=embed)
+                    forum = self.bot.get_channel(config.physbot_dm_forum)
+                    thread = await staff_utils.get_user_thread(forum, interaction.user)
+                    assert thread is not None, f"Could not find or create thread for user {interaction.user.id} in forum {config.physbot_dm_forum} for relaying."
+                    _ = {}
+                    await staff_utils.relay_content(thread, msg, _)
                 return await func(self, interaction, *args, **kwargs)
 
             except CommandOnCooldown as cd:

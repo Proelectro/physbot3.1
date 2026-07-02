@@ -55,9 +55,12 @@ class Miscellaneous(Cog):
         name="edit_message", description="To edit a message sent by the bot"
     )
     @requires_permission(Permission.STAFF)
-    async def edit_message(self, interaction: discord.Interaction, channel_id: str, message_id: str, new_content: str):
+    async def edit_message(self, interaction: discord.Interaction, new_content: str, message_id: str, channel_id: str = None):
         await interaction.response.defer(ephemeral=True)
-        channel = self.bot.get_channel(int(channel_id))
+        if channel_id is None:
+            channel = interaction.channel
+        else:
+            channel = self.bot.get_channel(int(channel_id))
         if not channel:
             channel = await self.bot.fetch_user(int(channel_id))
         try:

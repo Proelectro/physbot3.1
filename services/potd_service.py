@@ -438,9 +438,10 @@ class PotdService:
             potd_planning = self.bot.get_channel(config.potd_planning)
             
             self.live_potd = self._get_live_potd_num()
-            main_sheet[self.live_potd, COLUMN["status"]] = "active"
-            self.live_potd = None
-            main_sheet.commit()
+            if self.live_potd is not None:
+                main_sheet[self.live_potd, COLUMN["status"]] = "active"
+                self.live_potd = None
+                main_sheet.commit()
             
             assert isinstance(
                 potd_planning, discord.TextChannel

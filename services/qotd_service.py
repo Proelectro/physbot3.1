@@ -3,6 +3,8 @@ import utils.utils as utils
 import asyncio
 import discord
 from typing import Union, Optional, Tuple, Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from datetime import datetime, time
 from discord.ext import commands
 from services.google_sheet_service import GoogleSheetService, LocalSheet
 from logger import Logger
@@ -461,6 +463,44 @@ class QotdService:
                 qotd_sheet.update_data(new_data)
                 qotd_sheet.commit()
                 return True
+            
+    async def start_season(self) -> bool:
+        """Start a new QOTD season."""
+        async with self.lock:
+            if self.gss["data"][1, 3] == "done":
+                self.gss["data"][1, 3] = "live"
+                self.gss["data"].commit()
+                await self.logger.info("Started a new QOTD season")
+                return True
+        return False
+
+    def get_time(self):
+        """Get the time for the daily QOTD post."""
+        time_str = self.gss["data"][1, 4]
+        hour, minute = map(int, time_str.split(","))
+        return hour, minute
+
+            
+    async def change_time(self, hour: int, minute: int, timezone: str) -> None:
+        """Set the time for the daily QOTD post."""
+        async with self.lock:
+            try:
+                tz = ZoneInfo(timezone)
+            except ZoneInfoNotFoundError:
+                raise ValueError(f"Invalid or unrecognized IANA timezone: {timezone}")
+
+            # Create a timezone-aware datetime using today's date in that target timezone 
+            # (using today's date ensures correct Daylight Saving Time offsets are applied)
+            now_local = datetime.now(tz)
+            local_dt = datetime.combine(now_local.date(), time(hour=hour, minute=minute), tzinfo=tz)
+            
+            # Convert exactly to UTC
+            utc_dt = local_dt.astimezone(ZoneInfo("UTC"))
+            utc_hour = utc_dt.hour
+            utc_minute = utc_dt.minute
+            self.gss["data"][1, 4] = f"{utc_hour},{utc_minute}"
+            self.gss["data"].commit()
+            return utc_hour, utc_minute
 
     async def _submit(
         self, interaction: discord.Interaction, qotd_num: Optional[int], answer_str: str
@@ -551,9 +591,10 @@ class QotdService:
             qotd_planning = self.bot.get_channel(config.qotd_planning)
             
             self.live_qotd = self._get_live_qotd_num()
-            main_sheet[self.live_qotd, COLUMN["status"]] = "active"
-            self.live_qotd = None
-            main_sheet.commit()
+            if self.live_qotd is not None:
+                main_sheet[self.live_qotd, COLUMN["status"]] = "active"
+                self.live_qotd = None
+                main_sheet.commit()
             
             assert isinstance(
                 qotd_planning, discord.TextChannel

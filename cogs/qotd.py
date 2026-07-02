@@ -27,7 +27,11 @@ class Qotd(Cog):
         self.bot.tree.on_error = self.on_app_command_error
         self.logger = Logger(bot)
         self.qotd_service = QotdService(bot)
+        hour, minute = self.qotd_service.get_time()
+        print(f"QOTD posting time is set to {hour}:{minute} UTC")
+        self.daily_qotd_loop.change_interval(time=time(hour, minute))
         self.daily_qotd_loop.start()
+        print(f"QOTD daily loop started at {hour}:{minute} UTC")
         self.empty_run = datetime.now()
         # self.update_leaderboard_hrs.start()
 
@@ -66,15 +70,74 @@ class Qotd(Cog):
     # @catch_errors
     # async def before_hourly_task(self):
     #     await self.bot.wait_until_ready()
-
     
-    
-    @tasks.loop(time=time(*utils.from_ist_to_utc(6, 30))) 
+    @tasks.loop(time=time(0, 0)) 
     @catch_errors
     async def daily_qotd_loop(self):
         await self.logger.info("Starting daily QOTD task")
         await self.qotd_service.daily_question()
         await self.logger.info("Completed daily QOTD task")
+
+    @group.command(name="start", description="To start the qotd season")
+    @requires_permission(Permission.QOTD_CREATOR)
+    async def start(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        if await self.qotd_service.start_season():
+            await interaction.followup.send(f"Started the QOTD season successfully. Will post {utils.convert_time_discord_format(*self.qotd_service.get_time())}.")
+        else:
+            await interaction.followup.send("Qotd season is already live, end it first to start a new one.")
+
+    @group.command(name="change_time", description="To change the posting time of the qotd, optional timezone argument defaults to UTC")
+    @requires_permission(Permission.QOTD_CREATOR)
+    @app_commands.choices(timezone=[
+        # --- North America ---
+        app_commands.Choice(name="🇺🇸 US Eastern (EST/EDT)", value="US/Eastern"),
+        app_commands.Choice(name="🇺🇸 US Central (CST/CDT)", value="US/Central"),
+        app_commands.Choice(name="🇺🇸 US Mountain (MST/MDT)", value="US/Mountain"),
+        app_commands.Choice(name="🇺🇸 US Pacific (PST/PDT)", value="US/Pacific"),
+        app_commands.Choice(name="🇺🇸 US Alaska (AKST/AKDT)", value="US/Alaska"),
+        app_commands.Choice(name="🇺🇸 US Hawaii (HST)", value="US/Hawaii"),
+        app_commands.Choice(name="🇨🇦 Canada Toronto (EST/EDT)", value="America/Toronto"),
+        app_commands.Choice(name="🇨🇦 Canada Vancouver (PST/PDT)", value="America/Vancouver"),
+        app_commands.Choice(name="🇲🇽 Mexico City (CST/CDT)", value="America/Mexico_City"),
+
+        # --- South America ---
+        app_commands.Choice(name="🇧🇷 Brazil São Paulo (BRT)", value="America/Sao_Paulo"),
+
+        # --- Europe ---
+        app_commands.Choice(name="🇬🇧 UK London (GMT/BST)", value="Europe/London"),
+        app_commands.Choice(name="🇪🇺 Central Europe (CET/CEST)", value="Europe/Paris"),
+        app_commands.Choice(name="🇪🇺 Eastern Europe (EET/EEST)", value="Europe/Kyiv"),
+        app_commands.Choice(name="🇷🇺 Russia Moscow (MSK)", value="Europe/Moscow"),
+
+        # --- Africa & Middle East ---
+        app_commands.Choice(name="🇿🇦 South Africa (SAST)", value="Africa/Johannesburg"),
+        app_commands.Choice(name="🇦🇪 UAE Dubai (GST)", value="Asia/Dubai"),
+
+        # --- Asia ---
+        app_commands.Choice(name="🇮🇳 India Standard Time (IST)", value="Asia/Kolkata"),
+        app_commands.Choice(name="🇸🇬 Singapore (SGT)", value="Asia/Singapore"),
+        app_commands.Choice(name="🇨🇳 China Beijing (CST)", value="Asia/Shanghai"),
+        app_commands.Choice(name="🇯🇵 Japan Tokyo (JST)", value="Asia/Tokyo"),
+
+        # --- Oceania ---
+        app_commands.Choice(name="🇦🇺 Australia Sydney (AEST/AEDT)", value="Australia/Sydney"),
+        app_commands.Choice(name="🇦🇺 Australia Perth (AWST)", value="Australia/Perth"),
+        app_commands.Choice(name="🇳🇿 New Zealand (NZST/NZDT)", value="Pacific/Auckland"),
+
+        # --- Universal ---
+        app_commands.Choice(name="🌐 Coordinated Universal Time (UTC)", value="UTC"),
+        app_commands.Choice(name="🌐 Greenwich Mean Time (GMT)", value="GMT"),
+    ])
+    async def change_time(self, interaction: discord.Interaction, hour: int, minute: int, timezone: Optional[str] = "UTC"):
+        await interaction.response.defer()
+        if hour < 0 or hour > 23 or minute < 0 or minute > 59:
+            return await interaction.followup.send("Invalid hour or minute. Hour should be between 0-23 and minute should be between 0-59.")
+        utc_hour, utc_minute = await self.qotd_service.change_time(hour, minute, timezone)
+        self.daily_qotd_loop.change_interval(time=time(utc_hour, utc_minute))
+        self.daily_qotd_loop.restart()
+        await interaction.followup.send(f"Successfully changed the posting time of the QOTD. Will post the next QOTD {utils.convert_time_discord_format(utc_hour, utc_minute)}.")
+
 
     @Cog.listener()
     async def on_app_command_error(
