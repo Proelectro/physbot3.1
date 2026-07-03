@@ -1,119 +1,168 @@
 # Command definitions with detailed descriptions
+
 qotd_cmds_everyone = [
     (
         "/qotd fetch <num>",
-        "Retrieves a past Question of the Day by its number. Useful for reviewing old questions or discussion archives.",
+        "Retrieve a past Question of the Day by its number.",
     ),
     (
         "/qotd solution <num>",
-        "Displays the official solution and accepted answer for a specific QOTD. Great for checking the correct approach or explanation.",
+        "Display the official solution and answer for a specific QOTD.",
     ),
     (
         "/qotd submit <answer> [num]",
-        "Submit your answer to the current or specified QOTD via DM. If no number is given, your answer will apply to the live question. Cooldown: 30s.",
+        "Submit your answer for the live or specified QOTD via DM. Cooldown: 30 seconds.",
     ),
     (
-        "/qotd help",
-        "Shows this help message, listing all available QOTD commands you have permission to use.",
-    ),
-    (
-        "/qotd verify_submission [num]",
-        "Verify the receipt and validity of a submitted answer for any active QOTD (i.e. any QOTD of current season defaults to live if no arg given) via DM.",
+        "/qotd verify_submission <num>",
+        "Verify your submissions for an active QOTD via DM.",
     ),
     (
         "/qotd score [user]",
-        "Get a detailed transcript of a user's QOTD score history. Defaults to your own score if no user is mentioned.",
+        "View the detailed score transcript for yourself or another user.",
     ),
     (
         "/qotd random [topic] [curator] [difficulty]",
-        "Fetch a random QOTD based on optional filters like topic, curator, or difficulty. If no filters are provided, it returns any random QOTD.",
+        "Fetch a random QOTD matching the optional filters.",
+    ),
+    (
+        "/qotd help",
+        "Display the list of QOTD commands available to you.",
     ),
 ]
+
 qotd_cmds_creator = [
     (
-        "/qotd upload <problem> <topic> <answer> <difficulty> [tolerance] [source] [points]",
-        "Add a new QOTD to the planning queue. Provide question image as an attachment, the topic, the correct numeric answer, difficulty (e.g., easy/medium/hard), optional tolerance percentage, source reference, and legacy points field.",
+        "/qotd start",
+        "Start a new QOTD season.",
     ),
     (
-        "/qotd update_solution <num> <link>",
-        "Upload or correct the solution image/ pdf link(s) for an existing QOTD. Use this if the solution is wrong or missing.",
+        "/qotd change_time <hour> <minute> [timezone]",
+        "Change the daily posting time of the QOTD.",
     ),
     (
-        "/qotd pending [num]",
-        "List QOTD uploads awaiting approval or scheduling. Optionally filter by question number to see details of a specific pending item.",
+        "/qotd upload <question> <topic> <answer> <difficulty> <source> [tolerance] [points]",
+        "Upload a new QOTD for review.",
+    ),
+    (
+        "/qotd update_solution <num> <solution>",
+        "Upload or replace the solution attachment for a QOTD.",
     ),
     (
         "/qotd update_leaderboard",
-        "Recalculate and post the leaderboard for the current live QOTD. Updates ranks based on recent submissions according to scoring rules.",
+        "Recalculate the leaderboard for the current live QOTD.",
     ),
     (
-        "/qotd get_submissions <user> <num>",
-        "Get the submissions of a specific user for a specific QOTD.",
+        "/qotd pending [num]",
+        "View pending QOTDs awaiting review or scheduling.",
     ),
     (
-        "/qotd update_submission <user> <num> <new_submission(s)>",
-        "Update the submission for a specific user and QOTD with a new answer. New submissions can be a single answer or multiple answers separated by commas. Example: /qotd update_submission @user 5 42,43,44",
+        "/qotd edit <num> [fields...]",
+        "Edit an existing QOTD.",
+    ),
+    (
+        "/qotd get_submission <user> <num>",
+        "View the submissions of a user for a QOTD.",
+    ),
+    (
+        "/qotd update_submission <user> <num> <submission>",
+        "Overwrite a user's submission for a QOTD.",
+    ),
+    (
+        "/qotd update_offset <user> <offset>",
+        "Update the manual score offset of a user.",
     ),
     (
         "/qotd clear_submissions <num> [user]",
-        "Clear all submissions for a specific user and QOTD. Clears all submissions if no user is specified."
-    )
+        "Clear submissions for a user or everyone for a QOTD.",
+    ),
+    (
+        "/qotd clear_cache",
+        "Reload the QOTD cache. Owner only.",
+    ),
+    (
+        "/qotd end_season",
+        "End the current QOTD season. Owner only.",
+    ),
 ]
 
 potd_cmds_everyone = [
     (
         "/potd fetch <num>",
-        "Retrieves a past Problem of the Day by its number. Useful for reviewing old questions or discussion archives.",
+        "Retrieve a past Problem of the Day by its number.",
     ),
     (
         "/potd solution <num>",
-        "Displays the official solution for a specific POTD. Great for checking the correct approach or explanation.",
+        "Display the official solution for a POTD.",
     ),
     (
         "/potd submit <solution> [num]",
-        "Submit your solution to the current or specified POTD via DM. If no number is given, your solution will apply to the live problem. Cooldown: 30s.",
-    ),
-    (
-        "/potd help",
-        "Shows this help message, listing all available POTD commands you have permission to use.",
+        "Submit your solution for the live or specified POTD via DM. Cooldown: 30 seconds.",
     ),
     (
         "/potd random [topic] [curator] [difficulty]",
-        "Fetch a random POTD based on optional filters like topic, curator, or difficulty. If no filters are provided, it returns any random POTD.",
+        "Fetch a random POTD matching the optional filters.",
+    ),
+    (
+        "/potd help",
+        "Display the list of POTD commands available to you.",
     ),
 ]
 
 potd_cmds_creator = [
     (
-        "/potd upload <problem> <topic> <points> <difficulty> [source]",
-        "Add a new POTD to the planning queue. Attach problem image, difficulty (e.g., 1/2/3/4/5), source reference, and points.",
+        "/potd upload <problem> <topic> <difficulty> <source> <points>",
+        "Upload a new POTD for review.",
     ),
     (
         "/potd update_solution <num> <link>",
-        "Upload or correct the solution image/ pdf link(s) for an existing POTD. Use this if the solution is wrong or missing.",
+        "Update the solution for a POTD.",
     ),
     (
-        "/potd pending [num]",
-        "List POTD uploads awaiting approval or scheduling. Optionally filter by question number to see details of a specific pending item.",
+        "/potd add_score <num> <user> <points> [user_id]",
+        "Manually award points for a POTD.",
     ),
     (
         "/potd update_leaderboard <num>",
-        "Recalculate and post the leaderboard for the specified POTD.",
+        "Recalculate the leaderboard for a POTD.",
     ),
     (
-        "/potd add_score <num> <user> <score> [user_id]",
-        "Manually add a score for a user's submission to a specific POTD. Specify the problem number, user (mention or ID), and the score to be added.",
+        "/potd pending [num]",
+        "View pending POTDs awaiting review or scheduling.",
     ),
     (
-        "/potd edit <num> [fields to edit]",
-        "Edit the details of an existing POTD. Specify the problem number and the fields you want to update (e.g., topic, difficulty, source). This allows curators to correct or improve POTD information after it's been uploaded.",
-    )
+        "/potd edit <num> [fields...]",
+        "Edit an existing POTD.",
+    ),
+    (
+        "/potd clear_cache",
+        "Reload the POTD cache. Owner only.",
+    ),
+    (
+        "/potd check",
+        "Internal consistency check. Owner only.",
+    ),
 ]
 
 cmds_staff = [
     (
         "/staff help",
-        "Shows this help message, listing all available Staff commands you have permission to use.",
+        "Display the list of available staff commands.",
+    ),
+    (
+        "/staff clear_cache",
+        "Reload the staff cache. Owner only.",
+    ),
+    (
+        "/message <text> [channel/user id] [reply id]",
+        "Send a message through the bot.",
+    ),
+    (
+        "/edit_message <new_content> <message_id> [channel_id]",
+        "Edit a message previously sent by the bot.",
+    ),
+    (
+        "/remove_role <role>",
+        "Remove a role from every member who currently has it.",
     ),
 ]
-        
