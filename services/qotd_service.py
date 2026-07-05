@@ -178,7 +178,7 @@ class QotdService:
                 await self.logger.warning(f"Invalid QOTD number: {num}")
                 return False
             if problem:
-                image_path = await utils.upload_image("potd_images", num, problem, self.logger)
+                image_path = await utils.upload_image("qotd_images", num, problem, self.logger)
                 main_sheet[num, COLUMN["question path"]] = image_path
 
             if curator:
