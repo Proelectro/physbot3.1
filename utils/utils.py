@@ -334,13 +334,14 @@ def requires_permission(level: Permission):
 
                 # send fallback notification
                 try:
+                    error_msg = f"An unexpected error occurred. Please contact <@{config.proelectro}> immediately."
                     if interaction.response.is_done():
                         await interaction.followup.send(
-                            "An unexpected error occurred.", ephemeral=True
+                            error_msg, ephemeral=True
                         )
                     else:
                         await interaction.response.send_message(
-                            "An unexpected error occurred.", ephemeral=True
+                            error_msg, ephemeral=True
                         )
                 except:
                     pass
