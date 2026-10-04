@@ -1,4 +1,4 @@
-from datetime import time, datetime
+from datetime import time as dtime, datetime, timedelta, timezone
 import os
 from typing import Optional, Union
 
@@ -29,10 +29,11 @@ class Qotd(Cog):
         self.qotd_service = QotdService(bot)
         hour, minute = self.qotd_service.get_time()
         print(f"QOTD posting time is set to {hour}:{minute} UTC")
-        self.daily_qotd_loop.change_interval(time=time(hour, minute))
+        self.daily_qotd_loop.change_interval(time=dtime(hour, minute))
         self.daily_qotd_loop.start()
         print(f"QOTD daily loop started at {hour}:{minute} UTC")
         self.empty_run = datetime.now()
+        self.last_qotd_sent = datetime(0, 0, 0)
         # self.update_leaderboard_hrs.start()
 
     # General
@@ -71,11 +72,12 @@ class Qotd(Cog):
     # async def before_hourly_task(self):
     #     await self.bot.wait_until_ready()
     
-    @tasks.loop(time=time(0, 0)) 
+    @tasks.loop(time=dtime(0, 0)) 
     @catch_errors
     async def daily_qotd_loop(self):
         await self.logger.info("Starting daily QOTD task")
         await self.qotd_service.daily_question()
+        self.last_qotd_sent = datetime.now()
         await self.logger.info("Completed daily QOTD task")
 
     @group.command(name="start", description="To start the qotd season")
@@ -89,7 +91,7 @@ class Qotd(Cog):
 
     @group.command(name="change_time", description="To change the posting time of the qotd, optional timezone argument defaults to UTC")
     @requires_permission(Permission.QOTD_CREATOR)
-    @app_commands.choices(timezone=[
+    @app_commands.choices(tz=[
         # --- North America ---
         app_commands.Choice(name="🇺🇸 US Eastern (EST/EDT)", value="US/Eastern"),
         app_commands.Choice(name="🇺🇸 US Central (CST/CDT)", value="US/Central"),
@@ -129,12 +131,25 @@ class Qotd(Cog):
         app_commands.Choice(name="🌐 Coordinated Universal Time (UTC)", value="UTC"),
         app_commands.Choice(name="🌐 Greenwich Mean Time (GMT)", value="GMT"),
     ])
-    async def change_time(self, interaction: discord.Interaction, hour: int, minute: int, timezone: Optional[str] = "UTC"):
+    async def change_time(self, interaction: discord.Interaction, hour: int, minute: int, tz: Optional[str] = "UTC"):
         await interaction.response.defer()
         if hour < 0 or hour > 23 or minute < 0 or minute > 59:
             return await interaction.followup.send("Invalid hour or minute. Hour should be between 0-23 and minute should be between 0-59.")
-        utc_hour, utc_minute = await self.qotd_service.change_time(hour, minute, timezone)
-        self.daily_qotd_loop.change_interval(time=time(utc_hour, utc_minute))
+        utc_hour, utc_minute = await self.qotd_service.change_time(hour, minute, tz)
+        
+        now = datetime.now(timezone.utc)
+        next_qotd_time = now.replace(
+            hour=utc_hour,
+            minute=utc_minute,
+            second=0,
+            microsecond=0,
+        )
+        if next_qotd_time <= now:
+            next_qotd_time += timedelta(days=1)
+        
+        if (next_qotd_time - self.last_qotd_sent).total_seconds() < 60*60*24 and interaction.user.id != config.proelectro:
+            return await interaction.followup.send("The new time is too close to the last QOTD sent. Please choose a time at least 24 hours after the last QOTD. Or contact Proelectro to override this restriction.")
+        self.daily_qotd_loop.change_interval(time=dtime(utc_hour, utc_minute))
         self.daily_qotd_loop.restart()
         await interaction.followup.send(f"Successfully changed the posting time of the QOTD. Will post the next QOTD {utils.convert_time_discord_format(utc_hour, utc_minute)}.")
 
@@ -263,21 +278,28 @@ class Qotd(Cog):
 
     @group.command(
         name="update_leaderboard",
-        description="Update the leaderboard of the current QOTD.",
+        description="Update the leaderboard of a QOTD.",
     )
     @requires_permission(Permission.QOTD_CREATOR)
-    async def update_leaderboard(self, interaction: discord.Interaction):
+    async def update_leaderboard(
+        self,
+        interaction: discord.Interaction,
+        qotd: Optional[int] = None,
+    ):
         await interaction.response.defer()
-        success = await self.qotd_service.update_leaderboard()
+
+        success = await self.qotd_service.update_leaderboard(qotd)
+
         if success:
+            qotd_text = f"QOTD #{qotd}" if qotd is not None else "current QOTD"
             await interaction.followup.send(
-                "Leaderboard updated successfully.", ephemeral=True
+                f"Leaderboard for {qotd_text} updated successfully.",
+                ephemeral=True,
             )
-            await self.logger.warning(f"Leaderboard updated by {interaction.user}")
         else:
-            await interaction.followup.send("No live QOTD.", ephemeral=True)
-            await self.logger.warning(
-                f"Leaderboard update attempted but no live QOTD by {interaction.user}"
+            await interaction.followup.send(
+                "Invalid QOTD number or leaderboard could not be updated.",
+                ephemeral=True,
             )
 
     @group.command(

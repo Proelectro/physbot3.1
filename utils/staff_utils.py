@@ -107,3 +107,30 @@ async def get_user_thread(forum: discord.ForumChannel, user: discord.User) -> Op
         thread = thread and thread.thread
     return thread
 
+async def relay_reaction(
+    destination: discord.abc.Messageable,
+    message: discord.Message,
+    reaction: discord.Reaction,
+    message_cache: dict[int, int],
+    bot_user: discord.ClientUser,
+    add: bool,
+) -> bool:
+    """Mirror a reaction to the relayed copy of a message."""
+
+    relayed_message_id = message_cache.get(message.id)
+
+    if not relayed_message_id:
+        return False
+
+    try:
+        relayed_message = await destination.fetch_message(relayed_message_id)
+
+        if add:
+            await relayed_message.add_reaction(reaction.emoji)
+        else:
+            await relayed_message.remove_reaction(reaction.emoji, bot_user)
+
+        return True
+
+    except (discord.NotFound, discord.Forbidden):
+        return False

@@ -101,3 +101,127 @@ class StaffService:
             await asyncio.sleep(0.1)
         await self.lock.acquire()
 
+    async def on_reaction_add(
+        self,
+        reaction: discord.Reaction,
+        user: discord.User,
+    ) -> None:
+        if user.bot:
+            return
+
+        async with self.lock:
+            message = reaction.message
+
+            # Staff forum -> User DM
+            if (
+                isinstance(message.channel, discord.Thread)
+                and message.channel.parent_id == self.physbot_dm_forum_id
+            ):
+                user_id = staff_utils.get_user_id_from_thread(message.channel)
+
+                if user_id is None:
+                    return
+
+                target_user = self.bot.get_user(user_id)
+
+                if target_user is None:
+                    return
+
+                if target_user.dm_channel is None:
+                    await target_user.create_dm()
+
+                await staff_utils.relay_reaction(
+                    target_user.dm_channel,
+                    message,
+                    reaction,
+                    self.message_cache,
+                    self.bot.user,
+                    add=True,
+                )
+
+            # User DM -> Staff forum
+            elif isinstance(message.channel, discord.DMChannel):
+                forum = self.bot.get_channel(self.physbot_dm_forum_id)
+
+                if forum is None:
+                    return
+
+                thread = await staff_utils.get_user_thread(
+                    forum,
+                    user,
+                )
+
+                if thread is None:
+                    return
+
+                await staff_utils.relay_reaction(
+                    thread,
+                    message,
+                    reaction,
+                    self.message_cache,
+                    self.bot.user,
+                    add=True,
+                )
+
+
+    async def on_reaction_remove(
+        self,
+        reaction: discord.Reaction,
+        user: discord.User,
+    ) -> None:
+        if user.bot:
+            return
+
+        async with self.lock:
+            message = reaction.message
+
+            # Staff forum -> User DM
+            if (
+                isinstance(message.channel, discord.Thread)
+                and message.channel.parent_id == self.physbot_dm_forum_id
+            ):
+                user_id = staff_utils.get_user_id_from_thread(message.channel)
+
+                if user_id is None:
+                    return
+
+                target_user = self.bot.get_user(user_id)
+
+                if target_user is None:
+                    return
+
+                if target_user.dm_channel is None:
+                    await target_user.create_dm()
+
+                await staff_utils.relay_reaction(
+                    target_user.dm_channel,
+                    message,
+                    reaction,
+                    self.message_cache,
+                    self.bot.user,
+                    add=False,
+                )
+
+            # User DM -> Staff forum
+            elif isinstance(message.channel, discord.DMChannel):
+                forum = self.bot.get_channel(self.physbot_dm_forum_id)
+
+                if forum is None:
+                    return
+
+                thread = await staff_utils.get_user_thread(
+                    forum,
+                    user,
+                )
+
+                if thread is None:
+                    return
+
+                await staff_utils.relay_reaction(
+                    thread,
+                    message,
+                    reaction,
+                    self.message_cache,
+                    self.bot.user,
+                    add=False,
+                )

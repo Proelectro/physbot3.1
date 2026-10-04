@@ -218,13 +218,14 @@ class QotdService:
             await asyncio.sleep(0.1)
         await self.lock.acquire()
 
-    async def update_leaderboard(self) -> bool:
+    async def update_leaderboard(self, qotd_num: Optional[int] = None) -> bool:
         """Update the leaderboard with the latest QOTD statistics."""
         async with self.lock:
-            if self.gss["data"][1, 3] == "live":
-                return await self._update_leaderboard_stats()
-            else:
-                return False
+            if qotd_num is None:
+                if self.gss["data"][1, 3] != "live":
+                    return False
+
+            return await self._update_leaderboard_stats(qotd_num)
 
     async def fetch(
         self,
@@ -738,17 +739,31 @@ class QotdService:
                 self.is_end_season = True
                 return "Use the command again to end the season."
 
-    async def _update_leaderboard_stats(self) -> bool:
+    async def _update_leaderboard_stats(self, qotd_num: Optional[int] = None) -> bool:
         await self.logger.info("Updating leaderboard stats")
-        qotd_num = self._get_live_qotd_num()
+
         if qotd_num is None:
-            await self.logger.warning("No live QOTD for leaderboard update")
-            return False
-        await self.logger.info(f"Updating stats for live QOTD {qotd_num}")
+            qotd_num = self._get_live_qotd_num()
+            if qotd_num is None:
+                await self.logger.warning("No live QOTD for leaderboard update")
+                return False
+
+        await self.logger.info(f"Updating stats for QOTD {qotd_num}")
+
         main_sheet = self.gss["Sheet1"]
+
+        if qotd_num < 1 or qotd_num >= len(main_sheet.get_data()):
+            await self.logger.warning(f"Invalid QOTD number: {qotd_num}")
+            return False
+        
+        if main_sheet[qotd_num, COLUMN["status"]] not in ["active", "live"]:
+            await self.logger.warning(f"QOTD {qotd_num} is not active or live")
+            return False
+
         message = self.gss["data"][1, 0]
         done_qotds = self.gss["data"][1, 1]
         season = self.gss["data"][1, 2]
+
         time = utils.get_time()
         message = message.format(
             qotd=qotd_num,

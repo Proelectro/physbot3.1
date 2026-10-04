@@ -55,6 +55,28 @@ class Staff(Cog):
     @catch_errors 
     async def on_member_join(self, member: discord.Member):
         await self.staff_service.on_member_join(member)
+        
+    @Cog.listener()
+    @catch_errors
+    async def on_reaction_add(
+        self,
+        reaction: discord.Reaction,
+        user: discord.User,
+    ):
+        if user.bot:
+            return
+        await self.staff_service.on_reaction_add(reaction, user)
+
+    @Cog.listener()
+    @catch_errors
+    async def on_reaction_remove(
+        self,
+        reaction: discord.Reaction,
+        user: discord.User,
+    ):
+        if user.bot:
+            return
+        await self.staff_service.on_reaction_remove(reaction, user)
 
     @Cog.listener()
     async def on_app_command_error(
