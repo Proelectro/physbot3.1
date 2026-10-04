@@ -307,7 +307,7 @@ def requires_permission(level: Permission):
                     thread = await staff_utils.get_user_thread(forum, interaction.user)
                     assert thread is not None, f"Could not find or create thread for user {interaction.user.id} in forum {config.physbot_dm_forum} for relaying."
                     _ = {}
-                    await staff_utils.relay_content(thread, msg, _)
+                    # await staff_utils.relay_content(thread, msg, _)
                 return await func(self, interaction, *args, **kwargs)
 
             except CommandOnCooldown as cd:
