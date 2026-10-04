@@ -33,7 +33,7 @@ class Qotd(Cog):
         self.daily_qotd_loop.start()
         print(f"QOTD daily loop started at {hour}:{minute} UTC")
         self.empty_run = datetime.now()
-        self.last_qotd_sent = datetime(0, 0, 0)
+        self.last_qotd_sent = datetime(1970, 0, 0)
         # self.update_leaderboard_hrs.start()
 
     # General
